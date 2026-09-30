@@ -282,10 +282,6 @@ i[data-lucide] { display: inline-block; width: 1em; height: 1em; vertical-align:
   display: block;
   width: 100%;
   height: 100%;
-  image-rendering: -webkit-optimize-contrast;
-  image-rendering: crisp-edges;
-  transform: translateZ(0);
-  backface-visibility: hidden;
 }
 #hud-svg {
   position: absolute;
