@@ -211,17 +211,26 @@
   ];
 
   /* ---------------------------------------------------------------------- */
-  /* Canvas sizing (DPR-aware)                                               */
+  /* Canvas sizing (Full DPR-aware High-Resolution & Anti-Aliasing)          */
   /* ---------------------------------------------------------------------- */
+  let currentDpr = 1;
+
   function resize() {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    currentDpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 3));
     const w = window.innerWidth;
     const h = window.innerHeight;
-    canvas.width  = w * dpr;
-    canvas.height = h * dpr;
+    
+    // Set actual backing canvas resolution in hardware pixels
+    canvas.width  = Math.round(w * currentDpr);
+    canvas.height = Math.round(h * currentDpr);
+    
+    // Set CSS display size
     canvas.style.width  = w + 'px';
     canvas.style.height = h + 'px';
-    ctx.scale(dpr, dpr);
+    
+    // Configure high-fidelity image smoothing on device pixel buffer
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
   }
 
   /* ---------------------------------------------------------------------- */
@@ -280,6 +289,12 @@
   function draw(progress) {
     const w = window.innerWidth;
     const h = window.innerHeight;
+    const dpr = currentDpr || 1;
+
+    // Reset transform to 1:1 hardware pixel space
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
 
     ctx.fillStyle = '#050505';
     ctx.fillRect(0, 0, w, h);
@@ -292,11 +307,12 @@
       const vpAR  = w / h;
       let dw, dh;
 
+      // Fit with ample presence without pixel stretching
       if (vpAR > imgAR) {
-        dh = h * 0.90;
+        dh = h * 0.92;
         dw = dh * imgAR;
       } else {
-        dw = w * 0.90;
+        dw = w * 0.92;
         dh = dw / imgAR;
       }
 
