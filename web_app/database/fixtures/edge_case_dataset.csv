@@ -1,0 +1,9 @@
+sample_id,scenario_tag,heart_rate_bpm,rmssd_ms,spo2_pct,skin_temp_c,ambient_temp_c,ambient_humidity_pct,imu_jerk_ms3,aqi_ppm,barometric_pressure_hpa,flood_threat_index,risk_class,risk_tier
+1,Extreme Tachycardia,220.0,3.0,89.0,34.2,24.6,48.2,0.8,35.0,1013.2,0.04,2,CRITICAL_RED
+2,Extreme Bradycardia,32.0,4.0,86.0,34.2,24.6,48.2,0.8,35.0,1013.2,0.04,2,CRITICAL_RED
+3,Sub-Zero Cold Climate,72.0,45.0,98.4,28.5,-10.0,48.2,0.8,35.0,1013.2,0.04,0,NOMINAL_GREEN
+4,Extreme Heat Stroke,72.0,45.0,98.4,41.5,52.0,90.0,0.8,35.0,1013.2,0.04,2,CRITICAL_RED
+5,High Altitude Low Pressure,72.0,45.0,91.0,34.2,24.6,48.2,0.8,35.0,680.0,0.04,1,CAUTION_YELLOW
+6,Severe G-Impact Fall,160.0,45.0,98.4,34.2,24.6,48.2,52.0,35.0,1013.2,0.04,2,CRITICAL_RED
+7,Hazardous AQI Smog,115.0,45.0,98.4,34.2,24.6,48.2,0.8,480.0,1013.2,0.04,1,WARNING_ORANGE
+8,Extreme Flood / Cyclone,72.0,45.0,98.4,34.2,24.6,99.0,0.8,35.0,940.0,0.99,2,CRITICAL_RED

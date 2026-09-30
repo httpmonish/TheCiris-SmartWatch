@@ -1,0 +1,11 @@
+sample_id,scenario_tag,heart_rate_bpm,rmssd_ms,spo2_pct,skin_temp_c,ambient_temp_c,ambient_humidity_pct,imu_jerk_ms3,aqi_ppm,barometric_pressure_hpa,flood_threat_index,risk_class,risk_tier
+1,Normal Baseline,72,45.0,98.0,34.2,24.6,48.2,0.8,35.0,1013.2,0.04,0,NOMINAL_GREEN
+2,Normal Baseline,74,45.0,98.0,34.2,24.6,48.2,0.8,35.0,1013.2,0.04,0,NOMINAL_GREEN
+3,Normal Baseline,76,45.0,98.0,34.2,24.6,48.2,0.8,35.0,1013.2,0.04,0,NOMINAL_GREEN
+4,Normal Baseline,78,45.0,98.0,34.2,24.6,48.2,0.8,35.0,1013.2,0.04,0,NOMINAL_GREEN
+5,Normal Baseline,80,45.0,98.0,34.2,24.6,48.2,0.8,35.0,1013.2,0.04,0,NOMINAL_GREEN
+6,Normal Baseline,82,45.0,98.0,34.2,24.6,48.2,0.8,35.0,1013.2,0.04,0,NOMINAL_GREEN
+7,Normal Baseline,84,45.0,98.0,34.2,24.6,48.2,0.8,35.0,1013.2,0.04,0,NOMINAL_GREEN
+8,Normal Baseline,86,45.0,98.0,34.2,24.6,48.2,0.8,35.0,1013.2,0.04,0,NOMINAL_GREEN
+9,Normal Baseline,88,45.0,98.0,34.2,24.6,48.2,0.8,35.0,1013.2,0.04,0,NOMINAL_GREEN
+10,Normal Baseline,90,45.0,98.0,34.2,24.6,48.2,0.8,35.0,1013.2,0.04,0,NOMINAL_GREEN

@@ -1,0 +1,57 @@
+[
+  {
+    "id": "SHELTER_MH_001",
+    "name": "Disaster Relief Camp - Pune Central High School",
+    "district": "Pune, Maharashtra",
+    "latitude": 18.5204,
+    "longitude": 73.8567,
+    "capacity": 450,
+    "contact": "+91 20 2612 3456",
+    "supplies": ["Clean Water", "First Aid", "Power Supply", "Satellite Comm"],
+    "isFloodSafeZone": true
+  },
+  {
+    "id": "SHELTER_MH_002",
+    "name": "NDRF Flood Shelter - Kolhapur Sports Complex",
+    "district": "Kolhapur, Maharashtra",
+    "latitude": 16.7050,
+    "longitude": 74.2433,
+    "capacity": 800,
+    "contact": "+91 231 265 4321",
+    "supplies": ["Boats", "Medical Unit", "Rations", "Emergency Charging"],
+    "isFloodSafeZone": true
+  },
+  {
+    "id": "SHELTER_KL_001",
+    "name": "State Disaster Management Camp - Aluva",
+    "district": "Ernakulam, Kerala",
+    "latitude": 10.1076,
+    "longitude": 76.3516,
+    "capacity": 600,
+    "contact": "+91 484 262 7890",
+    "supplies": ["Inflatable Rafts", "Anti-Venom", "Food Packets", "Ambulance"],
+    "isFloodSafeZone": true
+  },
+  {
+    "id": "SHELTER_OD_001",
+    "name": "ODRAF Multi-Purpose Cyclone/Flood Shelter - Puri",
+    "district": "Puri, Odisha",
+    "latitude": 19.8135,
+    "longitude": 85.8312,
+    "capacity": 1200,
+    "contact": "+91 6752 22 3450",
+    "supplies": ["Generator Backup", "Water Treatment", "Doctor Station"],
+    "isFloodSafeZone": true
+  },
+  {
+    "id": "SHELTER_AS_001",
+    "name": "Brahmaputra Flood Relief Station - Guwahati",
+    "district": "Kamrup, Assam",
+    "latitude": 26.1445,
+    "longitude": 91.7362,
+    "capacity": 750,
+    "contact": "+91 361 223 7100",
+    "supplies": ["High Ground Camp", "Dry Food", "Emergency Radio"],
+    "isFloodSafeZone": true
+  }
+]

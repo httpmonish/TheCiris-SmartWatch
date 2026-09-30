@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+.venv/
+__pycache__/
+*.pyc
+*.swp
+.DS_Store
+
+# Heavy raw dataset binaries & uncompressed multi-hundred-MB files
+database/wisdm-dataset/raw/
+database/kaggle-har-dataset/Human Action Recognition/train/
+database/kaggle-har-dataset/Human Action Recognition/test/
+ml_pipeline/data/wearable_5M_dataset.csv
+real smartwatch original -jpg/
+*.db-wal
+*.db-shm
+web_app/ml_pipeline/
+web_app/database/ciris_platform.db
+
+# Build outputs
+.vercel/
+build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies

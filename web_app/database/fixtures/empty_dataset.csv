@@ -1,0 +1,1 @@
+sample_id,scenario_tag,heart_rate_bpm,rmssd_ms,spo2_pct,skin_temp_c,ambient_temp_c,ambient_humidity_pct,imu_jerk_ms3,aqi_ppm,barometric_pressure_hpa,flood_threat_index,risk_class,risk_tier

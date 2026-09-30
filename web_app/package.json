@@ -1,0 +1,19 @@
+{
+  "name": "ciris-smartwatch-platform",
+  "version": "1.0.0",
+  "description": "Hyper-premium scrollytelling landing page and live telemetry intelligence platform for the CIRIS solar-powered health and safety smartwatch",
+  "main": "server.js",
+  "engines": {
+    "node": ">=20.x"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "compression": "^1.7.4",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "multer": "^1.4.5-lts.1"
+  }
+}

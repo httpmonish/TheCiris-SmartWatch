@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CIRIS — Solar-Powered Health & Safety Smartwatch</title>
+  <meta name="description" content="Next-generation solar-powered smartwatch engineered for health, safety, and energy independence. Built around ESP32-S3 with MAX30101, BMI270, SHT31, CN3065 and more.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;0,14..32,900;1,14..32,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <link rel="stylesheet" href="style.css?v=3.3">
+</head>
+<body>
+
+  <!-- Ambient backdrop -->
+  <div class="ambient" aria-hidden="true">
+    <div class="ambient-a"></div>
+    <div class="ambient-b"></div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- HEALTH COMPANION & CIRIS AUTHENTICATION GATE                 -->
+  <!-- ============================================================ -->
+  <div id="auth-gate-modal" class="auth-gate-overlay">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="auth-logo-badge">
+          <i data-lucide="shield-check" style="width:13px;height:13px;"></i>
+          Health Companion Core
+        </div>
+        <h2 class="auth-title">Welcome to CIRIS</h2>
+        <p class="auth-subtitle">Offline-first early-warning health companion & biometric telemetry console</p>
+      </div>
+
+      <div class="auth-body">
+        <div class="auth-tabs">
+          <button id="tab-login" class="auth-tab-btn active" onclick="switchAuthTab('login')">Sign In</button>
+          <button id="tab-register" class="auth-tab-btn" onclick="switchAuthTab('register')">Register New Band</button>
+        </div>
+
+        <form id="auth-form" onsubmit="handleAuthSubmit(event)">
+          <div class="auth-input-group" id="group-name" style="display:none;">
+            <label>Wearer Full Name</label>
+            <input type="text" id="auth-name" class="auth-input" placeholder="e.g. Elena Rostova">
+          </div>
+
+          <div class="auth-input-group">
+            <label>Caregiver / Wearer Email or ID</label>
+            <input type="text" id="auth-email" class="auth-input" placeholder="wearer@ciris-guardian.io" required value="demo@ciris-guardian.io">
+          </div>
+
+          <div class="auth-input-group">
+            <label>Security Password / PIN</label>
+            <input type="password" id="auth-password" class="auth-input" placeholder="••••••••" required value="ciris2026!">
+          </div>
+
+          <!-- 3 Emergency Contacts Section (Required for New User Registration) -->
+          <div id="group-emergency-contacts" style="display:none;">
+            <div class="contacts-section-title">
+              <i data-lucide="phone-call" style="width:13px;height:13px;"></i>
+              3 Emergency Contacts (SMS & Call Dispatch)
+            </div>
+
+            <!-- Contact 1 (Primary) -->
+            <div class="contact-item-box">
+              <div class="contact-item-header">
+                <span>Contact 1 (Primary Caregiver / Next of Kin)</span>
+                <span style="color:var(--cyan-l)">Priority 1</span>
+              </div>
+              <div class="contact-grid-2">
+                <input type="text" id="contact-1-name" class="auth-input" placeholder="Name (e.g. Sarah Rostova)">
+                <input type="tel" id="contact-1-phone" class="auth-input" placeholder="+1 (555) 234-8901">
+              </div>
+            </div>
+
+            <!-- Contact 2 (Secondary) -->
+            <div class="contact-item-box">
+              <div class="contact-item-header">
+                <span>Contact 2 (Family / Workplace Safety Lead)</span>
+                <span style="color:var(--amber)">Priority 2</span>
+              </div>
+              <div class="contact-grid-2">
+                <input type="text" id="contact-2-name" class="auth-input" placeholder="Name (e.g. Dr. Vance)">
+                <input type="tel" id="contact-2-phone" class="auth-input" placeholder="+1 (555) 492-1104">
+              </div>
+            </div>
+
+            <!-- Contact 3 (Emergency / Medical Services) -->
+            <div class="contact-item-box">
+              <div class="contact-item-header">
+                <span>Contact 3 (Community / Municipal Dispatch)</span>
+                <span style="color:var(--green-l)">Priority 3 (112 Fallback)</span>
+              </div>
+              <div class="contact-grid-2">
+                <input type="text" id="contact-3-name" class="auth-input" placeholder="Name or Dept" value="Emergency Rescue Services">
+                <input type="tel" id="contact-3-phone" class="auth-input" placeholder="Phone or 112" value="112">
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" id="auth-submit-btn" class="auth-submit-btn">
+            Unlock & Launch Dashboard
+          </button>
+        </form>
+
+
+        <button type="button" class="auth-bypass-btn" onclick="bypassAuthGuest()">
+          ⚡ Continue as Verified Guest Operator
+        </button>
+
+        <div style="margin-top:14px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.08); text-align:center;">
+          <button type="button" onclick="toggleAiDrawer()" style="display:inline-flex; align-items:center; gap:7px; font-size:12px; color:var(--cyan-l); font-weight:600; cursor:pointer;">
+            <i data-lucide="bot" style="width:14px;height:14px;"></i>
+            Have queries? Ask ChatGPT AI Assistant
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================================================ -->
+  <!-- NAV                                                           -->
+  <!-- ============================================================ -->
+  <nav id="navbar">
+    <div class="nav-brand">
+      <a href="#" class="nav-logo-link">
+        <div class="nav-logo-mark">C</div>
+        <span class="nav-wordmark">CIRIS</span>
+      </a>
+      <div class="nav-live-pill">
+        <span class="nav-live-dot"></span>
+        ESP32-S3 Live
+      </div>
+    </div>
+
+
+    <div class="nav-links">
+      <a href="#architecture-section">Sensors</a>
+      <a href="#safety-section">Safety</a>
+      <a href="#solar-section">Solar</a>
+      <a href="#dashboard" class="nav-link-accent">Live Dashboard</a>
+      <a href="#ml-datasets-section">ML & Datasets</a>
+      <a href="#specs">Specs</a>
+      <button onclick="openComplaintModal()">Support</button>
+    </div>
+
+    <div class="nav-actions">
+      <button class="nav-ai-btn" onclick="toggleAiDrawer()" id="nav-ai-btn">
+        <i data-lucide="sparkles"></i>
+        AI Diagnostics
+        <span class="ai-dot"></span>
+      </button>
+      <a href="#dashboard" class="nav-cta">
+        Live Dashboard
+        <i data-lucide="arrow-right"></i>
+      </a>
+    </div>
+  </nav>
+
+  <!-- ============================================================ -->
+  <!-- SCROLLYTELLING  (700vh scroll track)                         -->
+  <!-- ============================================================ -->
+  <div id="scrolly">
+
+    <!-- Sticky canvas viewport -->
+    <div id="canvas-sticky">
+      <canvas id="scrolly-canvas"></canvas>
+      <svg id="hud-svg" aria-hidden="true"></svg>
+
+      <!-- Loader -->
+      <div id="canvas-loader">
+        <div class="loader-inner">
+          <div class="loader-ring">
+            <svg viewBox="0 0 56 56" class="loader-ring-bg"><circle cx="28" cy="28" r="24"/></svg>
+            <svg viewBox="0 0 56 56" style="position:absolute;inset:0;"><circle cx="28" cy="28" r="24"/></svg>
+          </div>
+          <p class="loader-title">Initializing CIRIS</p>
+          <p class="loader-sub">Preloading 300-frame sequence</p>
+          <div class="loader-bar-track">
+            <div id="loader-progress" class="loader-bar-fill"></div>
+          </div>
+          <span id="loader-pct">0%</span>
+        </div>
+      </div>
+
+      <!-- Scroll HUD (bottom pill) -->
+      <div id="scroll-hud">
+        <span id="scroll-hud-pct">0%</span>
+        <div class="scroll-hud-track">
+          <div id="scroll-hud-fill"></div>
+        </div>
+        <span id="scroll-hud-stage">Assembled</span>
+      </div>
+
+      <!-- Canvas controls -->
+      <div class="canvas-controls">
+        <button onclick="toggleHudLabels()" id="toggle-labels-btn" title="Toggle component labels">
+          <i data-lucide="tag"></i>
+        </button>
+        <button onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Return to top">
+          <i data-lucide="arrow-up"></i>
+        </button>
+      </div>
+
+      <!-- ================================================================ -->
+      <!-- CHAPTER OVERLAYS: PINNED IN VIEWPORT & SYNCHRONIZED WITH FRAMES  -->
+      <!-- ================================================================ -->
+      <div id="chapters-overlay">
+
+        <!-- CH1 Hero  0–12% -->
+        <div class="chapter" id="ch-hero">
+          <div class="ch-center">
+            <div class="hero-eyebrow">
+              <span class="hero-dot"></span>
+              Autonomous Solar Smartwatch
+            </div>
+            <h1 class="hero-h1">
+              <span class="brand-title-accent">CIRIS</span><br>
+              <em>Engineered for the human wrist.</em>
+            </h1>
+            <p class="hero-sub">
+              A solar-powered health and safety smartwatch built around the ESP32-S3. Continuous biosensing, emergency response, and autonomous energy — in a compact, sealed form.
+            </p>
+
+            <div class="hero-actions">
+              <a href="#architecture-section" class="btn-primary">
+                Explore Technology
+                <i data-lucide="chevron-down"></i>
+              </a>
+              <a href="#specs" class="btn-ghost">Full Specifications</a>
+            </div>
+            <div class="hero-scroll-cue">
+              <div class="hero-scroll-line"></div>
+              <span>Scroll to disassemble</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- CH2 Architecture  13–38% -->
+        <div class="chapter" id="ch-architecture">
+          <div class="ch-left">
+            <div class="glass-panel">
+              <div class="ch-eyebrow">02 / Core Architecture</div>
+              <h2 class="ch-title">Precision engineered for the wrist.</h2>
+              <p class="ch-body">Every millimeter is optimized to combine processing, sensing, power management, emergency response, and everyday comfort in a compact wearable.</p>
+              <div class="spec-table">
+                <div class="spec-row">
+                  <span class="spec-key">Compute Engine</span>
+                  <span class="spec-val spec-val-accent">ESP32-S3 Dual-Core</span>
+                </div>
+                <div class="spec-row">
+                  <span class="spec-key">Display</span>
+                  <span class="spec-val">0.96&quot; OLED SSD1306</span>
+                </div>
+                <div class="spec-row">
+                  <span class="spec-key">Solar Controller</span>
+                  <span class="spec-val spec-val-accent">CN3065 + Schottky</span>
+                </div>
+                <div class="spec-row">
+                  <span class="spec-key">Energy Storage</span>
+                  <span class="spec-val">High-Density LiPo</span>
+                </div>
+                <div class="spec-row">
+                  <span class="spec-key">Safety Input</span>
+                  <span class="spec-val">Waterproof Panic Button</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CH3 Sensors  39–58% -->
+        <div class="chapter" id="ch-sensors">
+          <div class="ch-right">
+            <div class="glass-panel">
+              <div class="ch-eyebrow">03 / Continuous Sensing</div>
+              <h2 class="ch-title">Clinical precision, always active.</h2>
+              <div class="sensor-list">
+                <div class="sensor-row">
+                  <div class="sensor-icon"><i data-lucide="activity"></i></div>
+                  <div>
+                    <div class="sensor-label">MAX30101</div>
+                    <div class="sensor-sub">Optical PPG & SpO2 — Green + IR LED (0x57)</div>
+                  </div>
+                </div>
+                <div class="sensor-row">
+                  <div class="sensor-icon"><i data-lucide="move"></i></div>
+                  <div>
+                    <div class="sensor-label">BMI270 IMU</div>
+                    <div class="sensor-sub">6-axis motion, step cadence, fall detection</div>
+                  </div>
+                </div>
+                <div class="sensor-row">
+                  <div class="sensor-icon"><i data-lucide="thermometer"></i></div>
+                  <div>
+                    <div class="sensor-label">MAX30208 / SHT31</div>
+                    <div class="sensor-sub">Clinical skin ±0.1°C + ambient temp/humidity</div>
+                  </div>
+                </div>
+                <div class="sensor-row" style="opacity:.6;">
+                  <span class="sensor-opt">BME280 — Barometric & flood risk sensing (optional)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CH4 Safety  59–73% -->
+        <div class="chapter" id="ch-safety">
+          <div class="ch-left">
+            <div class="glass-panel">
+              <div class="ch-eyebrow">04 / Safety Subsystem</div>
+              <h2 class="ch-title">When every second matters.</h2>
+              <p class="ch-body">A dedicated physical panic button enables immediate user-triggered alerts, while vibration and audible feedback confirm activation.</p>
+              <div class="safety-grid">
+                <div class="safety-item">
+                  <i data-lucide="shield-alert"></i>
+                  <span>Physical SOS</span>
+                </div>
+                <div class="safety-item">
+                  <i data-lucide="zap"></i>
+                  <span>Haptic Motor</span>
+                </div>
+                <div class="safety-item">
+                  <i data-lucide="volume-2"></i>
+                  <span>95dB Piezo</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CH5 Solar  74–86% -->
+        <div class="chapter" id="ch-solar">
+          <div class="ch-right">
+            <div class="glass-panel">
+              <div class="ch-eyebrow">05 / Autonomous Power</div>
+              <h2 class="ch-title">Power from the world around you.</h2>
+              <div class="pipeline">
+                <div class="pipeline-step">
+                  <div class="pipeline-dot p-cyan"></div>
+                  <span class="pipeline-label">Flexible Strap Solar Panel</span>
+                  <span class="pipeline-sub">Photovoltaic</span>
+                </div>
+                <div class="pipeline-connector">→ Schottky reverse-current protection</div>
+                <div class="pipeline-step">
+                  <div class="pipeline-dot p-blue"></div>
+                  <span class="pipeline-label">CN3065 Charge Controller</span>
+                  <span class="pipeline-sub">CC/CV MPPT</span>
+                </div>
+                <div class="pipeline-connector">→ Adaptive CC/CV charging loop</div>
+                <div class="pipeline-step">
+                  <div class="pipeline-dot p-green"></div>
+                  <span class="pipeline-label">High-Density LiPo Cell</span>
+                  <span class="pipeline-sub">3.7V Nominal</span>
+                </div>
+                <div class="pipeline-connector">→ Regulated 3.3V system bus</div>
+                <div class="pipeline-step">
+                  <div class="pipeline-dot p-white"></div>
+                  <span class="pipeline-label">ESP32-S3 + Sensor Subsystems</span>
+                  <span class="pipeline-sub">All loads</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CH6 Final  87–100% -->
+        <div class="chapter" id="ch-final">
+          <div class="ch-center">
+            <div class="glass-panel" style="max-width:620px; text-align:center;">
+              <div class="ch-eyebrow" style="justify-content:center;">06 / Complete System</div>
+              <h2 class="ch-title" style="font-size:clamp(26px,3vw,40px);">Technology that stays with you.</h2>
+              <p class="ch-body" style="max-width:440px; margin-left:auto; margin-right:auto;">Designed for health awareness, safety, motion intelligence, and solar-assisted everyday power.</p>
+              <div class="hero-actions" style="margin-bottom:0;">
+                <a href="#dashboard" class="btn-primary">View Live Dashboard</a>
+                <a href="#specs" class="btn-ghost">Specifications</a>
+              </div>
+              <div class="final-strip">
+                <div class="final-chip"><div class="final-chip-label">MCU</div><div class="final-chip-val">ESP32-S3</div></div>
+                <div class="final-chip"><div class="final-chip-label">Display</div><div class="final-chip-val">0.96" OLED</div></div>
+                <div class="final-chip"><div class="final-chip-label">Biosensing</div><div class="final-chip-val">MAX30101</div></div>
+                <div class="final-chip"><div class="final-chip-label">Motion</div><div class="final-chip-val">BMI270</div></div>
+                <div class="final-chip"><div class="final-chip-label">Solar</div><div class="final-chip-val">CN3065</div></div>
+                <div class="final-chip"><div class="final-chip-label">Sealed</div><div class="final-chip-val">Gasket + Coat</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /chapters-overlay -->
+
+    </div><!-- /canvas-sticky -->
+
+  </div><!-- /scrolly -->
+
+  <!-- ============================================================ -->
+  <!-- STATS STRIP                                                   -->
+  <!-- ============================================================ -->
+  <div id="stats-strip">
+    <div class="stats-inner">
+      <div class="stat-block reveal">
+        <div class="stat-num">16<span>+</span></div>
+        <div class="stat-label">Hardware components integrated on a single wearable PCB</div>
+        <div class="stat-sub">Full BOM verified</div>
+      </div>
+      <div class="stat-block reveal reveal-delay-1">
+        <div class="stat-num">±0.1<span>°C</span></div>
+        <div class="stat-label">Clinical skin temperature precision via MAX30208</div>
+        <div class="stat-sub">Epidermal contact sensing</div>
+      </div>
+      <div class="stat-block reveal reveal-delay-2">
+        <div class="stat-num">50<span>Hz</span></div>
+        <div class="stat-label">Real-time telemetry stream from ESP32-S3 sensor bus</div>
+        <div class="stat-sub">BLE GATT simulation</div>
+      </div>
+      <div class="stat-block reveal reveal-delay-3">
+        <div class="stat-num"><span>∞</span></div>
+        <div class="stat-label">Perpetual daylight operation via solar-assisted charging</div>
+        <div class="stat-sub">CN3065 + LiPo + Schottky</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- LIVE TELEMETRY DASHBOARD                                      -->
+  <!-- ============================================================ -->
+  <section id="dashboard">
+    <div class="container">
+
+      <div class="dash-header reveal">
+        <div id="architecture-section">
+          <div class="section-eyebrow">
+            <span class="section-eyebrow-dot"></span>
+            Real-Time Hardware Stream
+          </div>
+          <h2 class="section-title">Live Telemetry</h2>
+          <p class="section-sub">High-frequency decoded packets from the ESP32-S3 sensor bus, streamed via simulated BLE GATT.</p>
+        </div>
+        <div class="dash-actions">
+          <div class="live-pill">
+            <span class="live-pill-dot"></span>
+            50Hz BLE GATT
+          </div>
+          <button onclick="exportTelemetry('json')" class="dash-btn">
+            <i data-lucide="download"></i>
+            JSON
+          </button>
+          <button onclick="exportTelemetry('csv')" class="dash-btn">
+            <i data-lucide="file-spreadsheet"></i>
+            CSV
+          </button>
+          <button onclick="toggleSimulationModal()" class="dash-btn dash-btn-accent">
+            <i data-lucide="sliders"></i>
+            Sensor Injector
+          </button>
+        </div>
+      </div>
+
+      <!-- AI Trained Multi-Modal Risk Tier Banner (Connected with Trained Dataset) -->
+      <div id="ml-risk-tier-banner" class="ml-risk-banner tier-green reveal">
+        <div class="ml-risk-left">
+          <div id="ml-risk-badge" class="ml-risk-badge">
+            <i data-lucide="shield-check" style="width:14px;height:14px;"></i>
+            <span id="ml-risk-tier-name">NOMINAL GREEN</span>
+          </div>
+          <div class="ml-risk-info">
+            <span class="ml-risk-title" id="ml-risk-title">Physiological & Environmental Status Nominal</span>
+            <span class="ml-risk-sub" id="ml-risk-sub">Inference synced with trained 5,000,000 multi-modal synthetic dataset models</span>
+          </div>
+        </div>
+        <div class="ml-risk-stats">
+          <div class="ml-risk-stat-item">
+            <div class="ml-risk-stat-lbl">Trained Anomaly P(C2)</div>
+            <div class="ml-risk-stat-val" id="ml-risk-p2">0.02%</div>
+          </div>
+          <div class="ml-risk-stat-item">
+            <div class="ml-risk-stat-lbl">Composite Score</div>
+            <div class="ml-risk-stat-val" id="ml-risk-composite">0.042</div>
+          </div>
+          <div class="ml-risk-stat-item">
+            <div class="ml-risk-stat-lbl">Dataset Parity</div>
+            <div class="ml-risk-stat-val" style="color:var(--green-l)">98.8% Acc</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Telemetry cards -->
+      <div class="tgrid">
+
+        <!-- CARD 1: MAX30101 -->
+        <div class="tcard reveal">
+          <div class="tcard-header">
+            <div class="tcard-icon ti-red"><i data-lucide="heart"></i></div>
+            <div class="tcard-meta">
+              <div class="tcard-name">MAX30101 Optical</div>
+              <div class="tcard-sub">50Hz PPG Green/IR Stream</div>
+            </div>
+            <span class="tcard-badge tb-green">Online</span>
+          </div>
+          <div class="metrics-2">
+            <div class="metric-block">
+              <div class="metric-label">Heart Rate</div>
+              <div class="metric-value"><span id="telemetry-bpm">72</span><span class="metric-unit">BPM</span></div>
+            </div>
+            <div class="metric-block">
+              <div class="metric-label">SpO2 Oxygen</div>
+              <div class="metric-value m-cyan"><span id="telemetry-spo2">98.4</span><span class="metric-unit">%</span></div>
+            </div>
+          </div>
+          <div class="osc-wrap">
+            <div class="osc-top">
+              <span>Raw PPG Oscilloscope</span>
+              <span id="telemetry-ppg-raw" class="osc-val">2048 ADC</span>
+            </div>
+            <div class="osc-canvas-wrap">
+              <canvas id="ppg-canvas"></canvas>
+            </div>
+          </div>
+          <div class="tcard-footer">
+            <span>Perfusion Index: <b id="telemetry-pi">4.2%</b></span>
+            <span class="footer-status"><span class="footer-dot"></span> Normal Sinus</span>
+          </div>
+        </div>
+
+        <!-- CARD 2: BMI270 -->
+        <div class="tcard reveal reveal-delay-1">
+          <div class="tcard-header">
+            <div class="tcard-icon ti-default"><i data-lucide="move"></i></div>
+            <div class="tcard-meta">
+              <div class="tcard-name">BMI270 6-Axis IMU</div>
+              <div class="tcard-sub">Low-Power Motion Vector</div>
+            </div>
+            <span id="motion-badge" class="tcard-badge tb-blue">Steady Walk</span>
+          </div>
+          <div class="accel-3">
+            <div class="accel-block">
+              <div class="metric-label">Accel X</div>
+              <div id="telemetry-accel-x" class="accel-val">+0.02G</div>
+            </div>
+            <div class="accel-block">
+              <div class="metric-label">Accel Y</div>
+              <div id="telemetry-accel-y" class="accel-val">-0.05G</div>
+            </div>
+            <div class="accel-block">
+              <div class="metric-label">Accel Z</div>
+              <div id="telemetry-accel-z" class="accel-val">+0.98G</div>
+            </div>
+          </div>
+          <div class="metrics-2" style="margin-top:0;">
+            <div class="metric-block">
+              <div class="metric-label">Step Count</div>
+              <div class="metric-value"><span id="telemetry-steps">8,420</span></div>
+            </div>
+            <div class="metric-block">
+              <div class="metric-label">Cadence</div>
+              <div class="metric-value m-cyan"><span id="telemetry-cadence">112</span><span class="metric-unit">rpm</span></div>
+            </div>
+          </div>
+          <div class="tcard-footer">
+            <span>Fall Detection: <b style="color:var(--green-l)">Armed (&lt;0.2G)</b></span>
+            <span>Offload: <b>Bosch ASIC</b></span>
+          </div>
+        </div>
+
+        <!-- CARD 3: Thermal -->
+        <div class="tcard reveal reveal-delay-2">
+          <div class="tcard-header">
+            <div class="tcard-icon ti-amber"><i data-lucide="thermometer"></i></div>
+            <div class="tcard-meta">
+              <div class="tcard-name">Dual Thermal Loop</div>
+              <div class="tcard-sub">MAX30208 / TMP117 + SHT31</div>
+            </div>
+            <span class="tcard-badge tb-default">±0.1°C Clinical</span>
+          </div>
+          <div class="metrics-2">
+            <div class="metric-block">
+              <div class="metric-label">Skin Temp</div>
+              <div class="metric-value"><span id="telemetry-skin-temp">34.2</span><span class="metric-unit">°C</span></div>
+            </div>
+            <div class="metric-block">
+              <div class="metric-label">Ambient Air</div>
+              <div class="metric-value m-amber"><span id="telemetry-ambient-temp">24.6</span><span class="metric-unit">°C</span></div>
+            </div>
+          </div>
+          <div class="row-split">
+            <div>
+              <div class="metric-label">Relative Humidity</div>
+              <div class="metric-med" id="telemetry-humidity">48.2%</div>
+            </div>
+            <div class="text-right">
+              <div class="metric-label">Heat Index Risk</div>
+              <div class="metric-med" id="telemetry-heat-index" style="color:var(--green-l)">25.1°C — Normal</div>
+            </div>
+          </div>
+          <div class="tcard-footer">
+            <span>Contact: <b style="color:var(--green-l)">Epidermal Flush</b></span>
+            <span>Thermoreg: <b>Balanced</b></span>
+          </div>
+        </div>
+
+        <!-- CARD 4: BME280 -->
+        <div class="tcard reveal">
+          <div class="tcard-header">
+            <div class="tcard-icon ti-cyan"><i data-lucide="cloud-rain"></i></div>
+            <div class="tcard-meta">
+              <div class="tcard-name">Environment & Flood</div>
+              <div class="tcard-sub">BME280 Barometric Drop & AQI</div>
+            </div>
+            <span class="tcard-badge tb-cyan">Monitoring</span>
+          </div>
+          <div class="metrics-2">
+            <div class="metric-block">
+              <div class="metric-label">Barometric Pressure</div>
+              <div class="metric-value"><span id="telemetry-pressure">1013.2</span><span class="metric-unit">hPa</span></div>
+            </div>
+            <div class="metric-block">
+              <div class="metric-label">Altitude</div>
+              <div class="metric-value m-cyan"><span id="telemetry-altitude">142.5</span><span class="metric-unit">m</span></div>
+            </div>
+          </div>
+          <div class="bar-block">
+            <div class="bar-row">
+              <span>Rapid Flood / Storm Delta</span>
+              <span id="telemetry-flood" class="bar-val" style="color:var(--green-l)">4.0% — Stable</span>
+            </div>
+            <div class="prog-track"><div id="flood-bar" class="prog-fill pf-cyan" style="width:4%"></div></div>
+            <div class="bar-row" style="margin-top:4px;">
+              <span>Outdoor AQI</span>
+              <span id="telemetry-aqi" class="bar-val" style="color:var(--cyan-l)">28 — Good</span>
+            </div>
+          </div>
+          <div class="tcard-footer">
+            <span>Forecast: <b>Fair Weather</b></span>
+            <span>Storm Alert: <b style="color:var(--green-l)">Armed</b></span>
+          </div>
+        </div>
+
+        <!-- CARD 5: CN3065 Solar -->
+        <div class="tcard reveal reveal-delay-1">
+          <div class="tcard-header">
+            <div class="tcard-icon ti-amber">
+              <i data-lucide="sun" style="animation:spin 14s linear infinite;"></i>
+            </div>
+            <div class="tcard-meta">
+              <div class="tcard-name">CN3065 Solar Power</div>
+              <div class="tcard-sub">Strap Photovoltaic + Schottky</div>
+            </div>
+            <span id="solar-stat-badge" class="tcard-badge tb-amber">Harvesting</span>
+          </div>
+          <div class="metrics-2">
+            <div class="metric-block">
+              <div class="metric-label">Solar Current</div>
+              <div class="metric-value m-amber"><span id="telemetry-solar-ma">28.4</span><span class="metric-unit">mA</span></div>
+            </div>
+            <div class="metric-block">
+              <div class="metric-label">Battery SOC</div>
+              <div class="metric-value m-green"><span id="telemetry-battery-pct">84</span><span class="metric-unit">%</span></div>
+            </div>
+          </div>
+          <div class="bar-block">
+            <div class="bar-row">
+              <span>LiPo Cell Voltage</span>
+              <span id="telemetry-battery-v" class="bar-val">3.94 V</span>
+            </div>
+            <div class="prog-track"><div id="battery-bar" class="prog-fill pf-green" style="width:84%"></div></div>
+            <div class="bar-row" style="margin-top:4px;">
+              <span>Irradiance</span>
+              <span id="telemetry-lux" class="bar-val">48,500 Lux</span>
+            </div>
+          </div>
+          <div class="tcard-footer">
+            <span>Net Flow: <b style="color:var(--green-l)">+112 mW Positive</b></span>
+            <span>Mode: <b style="color:var(--cyan-l)">Perpetual Daylight</b></span>
+          </div>
+        </div>
+
+        <!-- CARD 6: Safety SOS -->
+        <div class="tcard reveal reveal-delay-2" id="panic-card">
+          <div class="tcard-header">
+            <div class="tcard-icon ti-red" id="panic-icon-wrapper"><i data-lucide="shield-alert"></i></div>
+            <div class="tcard-meta">
+              <div class="tcard-name">Safety & SOS Sub-Circuit</div>
+              <div class="tcard-sub">Tactile GPIO3 + ERM + Piezo</div>
+            </div>
+            <span id="panic-status-badge" class="tcard-badge tb-green">Secure</span>
+          </div>
+          <div class="panic-wrap">
+            <div class="panic-label">Physical SOS Button Status</div>
+            <button id="panic-trigger-btn" onclick="togglePanicState()" class="panic-btn">
+              <i data-lucide="bell-ring"></i>
+              <span id="panic-btn-text">Trigger Emergency Panic</span>
+            </button>
+          </div>
+          <div class="panic-status-2">
+            <div class="panic-stat">
+              <div class="metric-label">Haptic Motor</div>
+              <div id="haptic-status" class="panic-stat-val">Standby</div>
+            </div>
+            <div class="panic-stat">
+              <div class="metric-label">Piezo Buzzer</div>
+              <div id="buzzer-status" class="panic-stat-val">Silent</div>
+            </div>
+          </div>
+          <div class="tcard-footer">
+            <span>Interrupt: <b>Active-Low ISR</b></span>
+            <span id="gatt-sos-status" style="color:var(--green-l)">GATT: Idle</span>
+          </div>
+        </div>
+
+      </div><!-- /tgrid -->
+
+      <!-- Historical chart -->
+      <div class="hist-panel reveal" style="margin-top:28px;">
+        <div class="hist-header">
+          <div>
+            <h3 class="hist-title">Historical Telemetry Store</h3>
+            <p class="hist-sub">Partitioned buffers: optical, biomechanics, thermal, atmospheric, power</p>
+          </div>
+          <div class="hist-tabs">
+            <button class="hist-tab hist-tab-active" onclick="switchHistoryTab('optical', event)">Optical PPG</button>
+            <button class="hist-tab" onclick="switchHistoryTab('motion', event)">Motion IMU</button>
+            <button class="hist-tab" onclick="switchHistoryTab('thermal', event)">Thermal</button>
+            <button class="hist-tab" onclick="switchHistoryTab('environmental', event)">Atmospheric</button>
+            <button class="hist-tab" onclick="switchHistoryTab('power', event)">Solar Power</button>
+          </div>
+        </div>
+        <div class="hist-canvas-wrap">
+          <canvas id="history-canvas"></canvas>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- PRODUCTION ML & MULTI-DATASET PLATFORM BENCH                 -->
+  <!-- ============================================================ -->
+  <section id="ml-datasets-section" class="ml-platform-section">
+    <div class="container">
+      <div class="specs-header reveal">
+        <div class="section-eyebrow" style="justify-content:center;">
+          <span class="section-eyebrow-dot"></span>
+          Machine Learning & Dataset Engine
+        </div>
+        <h2 class="section-title">Multi-Dataset & HAR Intelligence Platform</h2>
+        <p class="section-sub" style="margin-left:auto; margin-right:auto; text-align:center;">
+          Integrated with WISDM Smartwatch Motion (IMU), Kaggle Human Action Recognition (HAR), and CIRIS Multi-Modal Biosensors.
+        </p>
+      </div>
+
+      <!-- Dataset Cards Overview -->
+      <div class="dataset-cards-grid reveal">
+        <!-- Card 1: WISDM Smartwatch HAR -->
+        <div class="dataset-card active" id="card-wisdm">
+          <div class="ds-card-badge"><i data-lucide="activity"></i> Motion IMU HAR</div>
+          <h3 class="ds-card-title">WISDM Smartwatch HAR</h3>
+          <p class="ds-card-desc">51 human subjects, 18 fine-grained activities, 20Hz 6-axis accelerometer & gyroscope sensor stream windows.</p>
+          <div class="ds-stats-row">
+            <div class="ds-stat"><span class="ds-stat-val">46,644</span><span class="ds-stat-lbl">Windows</span></div>
+            <div class="ds-stat"><span class="ds-stat-val">18</span><span class="ds-stat-lbl">Activities</span></div>
+            <div class="ds-stat"><span class="ds-stat-val">85.35%</span><span class="ds-stat-lbl">RF Accuracy</span></div>
+          </div>
+          <div class="ds-tags">
+            <span class="ds-tag">Walking</span><span class="ds-tag">Jogging</span><span class="ds-tag">Brushing Teeth</span><span class="ds-tag">Typing</span><span class="ds-tag">Eating</span>
+          </div>
+        </div>
+
+        <!-- Card 2: Kaggle HAR Action Vision -->
+        <div class="dataset-card" id="card-kaggle">
+          <div class="ds-card-badge" style="background:rgba(168,85,247,0.15);color:#c084fc;"><i data-lucide="eye"></i> Multimodal Vision HAR</div>
+          <h3 class="ds-card-title">Kaggle Human Action Recognition</h3>
+          <p class="ds-card-desc">12,600 action instances across 15 classes (sitting, sleeping, fighting, running, cycling, calling, etc.) with spatial gradient descriptors.</p>
+          <div class="ds-stats-row">
+            <div class="ds-stat"><span class="ds-stat-val">12,600</span><span class="ds-stat-lbl">Samples</span></div>
+            <div class="ds-stat"><span class="ds-stat-val">15</span><span class="ds-stat-lbl">Actions</span></div>
+            <div class="ds-stat"><span class="ds-stat-val">16</span><span class="ds-stat-lbl">CV Features</span></div>
+          </div>
+          <div class="ds-tags">
+            <span class="ds-tag">Running</span><span class="ds-tag">Cycling</span><span class="ds-tag">Fighting</span><span class="ds-tag">Calling</span><span class="ds-tag">Sleeping</span>
+          </div>
+        </div>
+
+        <!-- Card 3: CIRIS Biosensors -->
+        <div class="dataset-card" id="card-ciris">
+          <div class="ds-card-badge" style="background:rgba(16,185,129,0.15);color:#34d399;"><i data-lucide="heart-pulse"></i> Wearable Biosensors</div>
+          <h3 class="ds-card-title">CIRIS 100k Biosensors</h3>
+          <p class="ds-card-desc">10 raw physiological/environmental features, 5 composite strain indices, calibrated multi-class emergency risk classification.</p>
+          <div class="ds-stats-row">
+            <div class="ds-stat"><span class="ds-stat-val">100,000</span><span class="ds-stat-lbl">Records</span></div>
+            <div class="ds-stat"><span class="ds-stat-val">15</span><span class="ds-stat-lbl">Features</span></div>
+            <div class="ds-stat"><span class="ds-stat-val">99.90%</span><span class="ds-stat-lbl">Accuracy</span></div>
+          </div>
+          <div class="ds-tags">
+            <span class="ds-tag">PPG / SpO2</span><span class="ds-tag">Skin Temp</span><span class="ds-tag">Flood Index</span><span class="ds-tag">Cardiac Strain</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Interactive Predictor Console -->
+      <div class="ml-console-box reveal">
+        <div class="ml-console-header">
+          <div class="ml-tab-buttons">
+            <button class="ml-tab-btn active" id="tab-btn-wisdm" onclick="switchMlTab('wisdm')">
+              <i data-lucide="activity" style="width:14px;height:14px;"></i> WISDM Smartwatch HAR Predictor
+            </button>
+            <button class="ml-tab-btn" id="tab-btn-kaggle" onclick="switchMlTab('kaggle')">
+              <i data-lucide="sparkles" style="width:14px;height:14px;"></i> Kaggle Action Classifier
+            </button>
+            <button class="ml-tab-btn" id="tab-btn-ciris" onclick="switchMlTab('ciris')">
+              <i data-lucide="shield-alert" style="width:14px;height:14px;"></i> CIRIS Risk Predictor
+            </button>
+          </div>
+          <div class="ml-badge-status" id="ml-engine-badge">
+            <span class="live-pulse"></span> Active Model: Random Forest
+          </div>
+        </div>
+
+        <!-- WISDM HAR Tab Content -->
+        <div class="ml-tab-content" id="ml-content-wisdm">
+          <div class="ml-grid-2">
+            <div class="ml-inputs-panel">
+              <div class="ml-panel-title">Smartwatch IMU Sensor Window (5.0s @ 20Hz)</div>
+              <div class="ml-preset-btns">
+                <button class="preset-btn" onclick="setWisdmPreset('walking')">Walking</button>
+                <button class="preset-btn" onclick="setWisdmPreset('jogging')">Jogging</button>
+                <button class="preset-btn" onclick="setWisdmPreset('brushing')">Brushing Teeth</button>
+                <button class="preset-btn" onclick="setWisdmPreset('sitting')">Sitting</button>
+                <button class="preset-btn" onclick="setWisdmPreset('typing')">Typing</button>
+                <button class="preset-btn" onclick="setWisdmPreset('drinking')">Drinking</button>
+              </div>
+
+              <div class="slider-group">
+                <div class="slider-header"><span>Accel Mean Magnitude (m/s²)</span><span id="val-wisdm-amag">9.8</span></div>
+                <input type="range" id="range-wisdm-amag" min="0" max="25" step="0.1" value="9.8" oninput="updateWisdmLive()">
+              </div>
+              <div class="slider-group">
+                <div class="slider-header"><span>Accel Std Dev / Variance</span><span id="val-wisdm-astd">1.8</span></div>
+                <input type="range" id="range-wisdm-astd" min="0" max="12" step="0.1" value="1.8" oninput="updateWisdmLive()">
+              </div>
+              <div class="slider-group">
+                <div class="slider-header"><span>Motion Jerk (m/s³)</span><span id="val-wisdm-jerk">1.2</span></div>
+                <input type="range" id="range-wisdm-jerk" min="0" max="10" step="0.1" value="1.2" oninput="updateWisdmLive()">
+              </div>
+              <div class="slider-group">
+                <div class="slider-header"><span>Gyro Angular Velocity Magnitude (rad/s)</span><span id="val-wisdm-gmag">0.8</span></div>
+                <input type="range" id="range-wisdm-gmag" min="0" max="8" step="0.1" value="0.8" oninput="updateWisdmLive()">
+              </div>
+              <div class="slider-group">
+                <div class="slider-header"><span>Motion Energy & Spectral Entropy</span><span id="val-wisdm-energy">110.0</span></div>
+                <input type="range" id="range-wisdm-energy" min="10" max="400" step="1" value="110" oninput="updateWisdmLive()">
+              </div>
+            </div>
+
+            <div class="ml-result-panel">
+              <div class="ml-panel-title">Real-Time Inferred Smartwatch Activity</div>
+              <div class="ml-output-card" id="wisdm-output-card">
+                <div class="activity-hero">
+                  <div class="activity-icon-wrap" id="wisdm-icon-wrap"><i data-lucide="activity"></i></div>
+                  <div>
+                    <div class="activity-hero-label" id="wisdm-act-name">Walking</div>
+                    <div class="activity-hero-sub" id="wisdm-act-category">Category: Ambulation · WISDM 18-Class HAR</div>
+                  </div>
+                </div>
+                <div class="confidence-bar-wrap">
+                  <div class="conf-bar-label"><span>Inference Confidence</span><span id="wisdm-conf-pct">92.4%</span></div>
+                  <div class="conf-track"><div class="conf-fill" id="wisdm-conf-fill" style="width:92.4%;"></div></div>
+                </div>
+                <div class="top-probs-list" id="wisdm-top-probs">
+                  <!-- Injected via JS -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Kaggle Action Tab Content -->
+        <div class="ml-tab-content" id="ml-content-kaggle" style="display:none;">
+          <div class="ml-grid-2">
+            <div class="ml-inputs-panel">
+              <div class="ml-panel-title">Computer Vision Action Descriptor Vector</div>
+              <div class="ml-preset-btns">
+                <button class="preset-btn" onclick="setKagglePreset('cycling')">Cycling</button>
+                <button class="preset-btn" onclick="setKagglePreset('running')">Running</button>
+                <button class="preset-btn" onclick="setKagglePreset('fighting')">Fighting</button>
+                <button class="preset-btn" onclick="setKagglePreset('sitting')">Sitting</button>
+                <button class="preset-btn" onclick="setKagglePreset('sleeping')">Sleeping</button>
+                <button class="preset-btn" onclick="setKagglePreset('using_laptop')">Using Laptop</button>
+              </div>
+
+              <div class="slider-group">
+                <div class="slider-header"><span>Edge Gradient Energy</span><span id="val-kag-edge">28.5</span></div>
+                <input type="range" id="range-kag-edge" min="5" max="80" step="0.5" value="28.5" oninput="updateKaggleLive()">
+              </div>
+              <div class="slider-group">
+                <div class="slider-header"><span>Vertical Body Gradient</span><span id="val-kag-vgrad">14.5</span></div>
+                <input type="range" id="range-kag-vgrad" min="2" max="45" step="0.5" value="14.5" oninput="updateKaggleLive()">
+              </div>
+              <div class="slider-group">
+                <div class="slider-header"><span>Spatial Symmetry Index</span><span id="val-kag-sym">0.82</span></div>
+                <input type="range" id="range-kag-sym" min="0.2" max="1.0" step="0.01" value="0.82" oninput="updateKaggleLive()">
+              </div>
+              <div class="slider-group">
+                <div class="slider-header"><span>Upper/Lower Spatial Contrast</span><span id="val-kag-cont">42.0</span></div>
+                <input type="range" id="range-kag-cont" min="5" max="90" step="1" value="42.0" oninput="updateKaggleLive()">
+              </div>
+            </div>
+
+            <div class="ml-result-panel">
+              <div class="ml-panel-title">Inferred Human Action Class (15-Class HAR)</div>
+              <div class="ml-output-card">
+                <div class="activity-hero">
+                  <div class="activity-icon-wrap" style="background:rgba(168,85,247,0.2);color:#c084fc;"><i data-lucide="eye"></i></div>
+                  <div>
+                    <div class="activity-hero-label" id="kag-act-name">Cycling</div>
+                    <div class="activity-hero-sub">Dataset: Kaggle Human Action Recognition · Vision Embeddings</div>
+                  </div>
+                </div>
+                <div class="confidence-bar-wrap">
+                  <div class="conf-bar-label"><span>Model Confidence</span><span id="kag-conf-pct">84.0%</span></div>
+                  <div class="conf-track"><div class="conf-fill" id="kag-conf-fill" style="width:84.0%;background:linear-gradient(90deg,#8b5cf6,#d946ef);"></div></div>
+                </div>
+                <div class="top-probs-list" id="kag-top-probs">
+                  <!-- Injected via JS -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CIRIS Biosensor Tab Content -->
+        <div class="ml-tab-content" id="ml-content-ciris" style="display:none;">
+          <div class="ml-grid-2">
+            <div class="ml-inputs-panel">
+              <div class="ml-panel-title">Multi-Modal Biosensor Telemetry Inputs</div>
+              <div class="ml-preset-btns">
+                <button class="preset-btn" onclick="setCirisPreset('nominal')">Nominal Sleep</button>
+                <button class="preset-btn" onclick="setCirisPreset('heat')">Heat Wave Strain</button>
+                <button class="preset-btn" onclick="setCirisPreset('emergency')">Cardiac & Flood SOS</button>
+              </div>
+
+              <div class="slider-group">
+                <div class="slider-header"><span>Heart Rate (MAX30101 Optical PPG)</span><span id="val-cir-hr">72 BPM</span></div>
+                <input type="range" id="range-cir-hr" min="40" max="210" step="1" value="72" oninput="updateCirisLive()">
+              </div>
+              <div class="slider-group">
+                <div class="slider-header"><span>Blood Oxygen SpO2 (%)</span><span id="val-cir-spo2">98.5%</span></div>
+                <input type="range" id="range-cir-spo2" min="70" max="100" step="0.5" value="98.5" oninput="updateCirisLive()">
+              </div>
+              <div class="slider-group">
+                <div class="slider-header"><span>Flood Threat & Barometric Drop Index</span><span id="val-cir-flood">0.05</span></div>
+                <input type="range" id="range-cir-flood" min="0" max="1.0" step="0.01" value="0.05" oninput="updateCirisLive()">
+              </div>
+            </div>
+
+            <div class="ml-result-panel">
+              <div class="ml-panel-title">Tri-Tier Emergency Risk Classification</div>
+              <div class="ml-output-card">
+                <div class="activity-hero">
+                  <div class="activity-icon-wrap" id="cir-risk-icon" style="background:rgba(16,185,129,0.2);color:#34d399;"><i data-lucide="shield-check"></i></div>
+                  <div>
+                    <div class="activity-hero-label" id="cir-risk-label">Nominal / Routine Baseline</div>
+                    <div class="activity-hero-sub" id="cir-risk-tier">Tier: NOMINAL_GREEN · 100k Sample Calibrated Model</div>
+                  </div>
+                </div>
+                <div class="confidence-bar-wrap">
+                  <div class="conf-bar-label"><span>Risk Confidence</span><span id="cir-conf-pct">99.2%</span></div>
+                  <div class="conf-track"><div class="conf-fill" id="cir-conf-fill" style="width:99.2%;background:#10b981;"></div></div>
+                </div>
+                <div class="top-probs-list" id="cir-top-probs"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Model Registry Table -->
+      <div class="models-table-box reveal">
+        <div class="models-table-header">
+          <h3 class="models-table-title"><i data-lucide="layers" style="width:16px;height:16px;"></i> Active Model Registry & Benchmarks</h3>
+          <span class="models-table-sub">Live registered models from SQLite WAL Database</span>
+        </div>
+        <div class="table-responsive">
+          <table class="ciris-table" id="models-bench-table">
+            <thead>
+              <tr>
+                <th>Model ID</th>
+                <th>Dataset</th>
+                <th>Algorithm</th>
+                <th>Accuracy</th>
+                <th>F1-Score</th>
+                <th>Latency</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>model_random_forest_v100k</code></td>
+                <td>CIRIS Wearable 100k Biosensors</td>
+                <td>Random Forest (100 Trees)</td>
+                <td><strong style="color:var(--green-l);">99.90%</strong></td>
+                <td>0.9990</td>
+                <td>0.42 ms</td>
+                <td><span class="status-pill active">Production</span></td>
+              </tr>
+              <tr>
+                <td><code>model_wisdm_har_random_forest</code></td>
+                <td>WISDM Smartwatch HAR</td>
+                <td>Random Forest (100 Trees)</td>
+                <td><strong style="color:var(--cyan-l);">85.35%</strong></td>
+                <td>0.8521</td>
+                <td>0.88 ms</td>
+                <td><span class="status-pill active">Production</span></td>
+              </tr>
+              <tr>
+                <td><code>model_kaggle_har_random_forest</code></td>
+                <td>Kaggle Human Action Recognition</td>
+                <td>Random Forest (100 Trees)</td>
+                <td><strong style="color:#c084fc;">78.50%</strong></td>
+                <td>0.7812</td>
+                <td>0.65 ms</td>
+                <td><span class="status-pill staging">Staging</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- SPECIFICATIONS                                                -->
+  <!-- ============================================================ -->
+  <section id="specs">
+    <div class="container">
+      <div class="specs-header reveal">
+        <div class="section-eyebrow" style="justify-content:center;">
+          <span class="section-eyebrow-dot"></span>
+          Engineering Blueprint
+        </div>
+        <h2 class="section-title" id="safety-section">Bill of Materials</h2>
+        <p class="section-sub" style="margin-left:auto; margin-right:auto; text-align:center;">Every component verified against the physical schematic and firmware architecture.</p>
+      </div>
+
+      <div class="bom-grid">
+        <div class="bom-card reveal"><div class="bom-num">01 / MCU Core</div><div class="bom-name">ESP32-S3 Microcontroller</div><div class="bom-desc">Dual-core Xtensa® LX7 @ 240MHz, 512KB SRAM, 8MB PSRAM, Wi-Fi & BLE 5.0 mesh.</div></div>
+        <div class="bom-card reveal reveal-delay-1"><div class="bom-num">02 / Display</div><div class="bom-name">0.96" OLED SSD1306</div><div class="bom-desc">128×64 monochrome high-contrast, non-blocking U8g2 hardware I2C driver (0x3C).</div></div>
+        <div class="bom-card reveal reveal-delay-2"><div class="bom-num">03 / Optical Sensing</div><div class="bom-name">MAX30101 Optical Sensor</div><div class="bom-desc">Pulse oximeter & heart-rate monitor with Green & IR LEDs, ambient light cancellation (0x57).</div></div>
+        <div class="bom-card reveal reveal-delay-3"><div class="bom-num">04 / Motion IMU</div><div class="bom-name">BMI270 6-Axis IMU</div><div class="bom-desc">Ultra-low power 16-bit 3-axis accelerometer + gyroscope with hardware step counter (0x68).</div></div>
+        <div class="bom-card reveal"><div class="bom-num">05 / Ambient Climate</div><div class="bom-name">SHT31 Temp & Humidity</div><div class="bom-desc">Sensirion high-accuracy humidity ±2% RH and ambient temperature ±0.2°C (0x44).</div></div>
+        <div class="bom-card reveal reveal-delay-1"><div class="bom-num">06 / Clinical Body Temp</div><div class="bom-name">MAX30208 / TMP117</div><div class="bom-desc">Dedicated ±0.1°C clinical epidermal skin temperature with direct thermal pad contact (0x50).</div></div>
+        <div class="bom-card reveal reveal-delay-2"><div class="bom-num">07 / Barometric & Flood</div><div class="bom-name">BME280 Pressure Module</div><div class="bom-desc">Atmospheric pressure 300–1100 hPa, altitude tracking, and barometric drop flood alerts (0x76).</div></div>
+        <div class="bom-card reveal reveal-delay-3"><div class="bom-num">08 / Emergency Input</div><div class="bom-name">Tactile Panic Button</div><div class="bom-desc">Waterproof silicone-sealed physical switch on GPIO 3 with hardware-debounced ISR interrupt.</div></div>
+        <div class="bom-card reveal"><div class="bom-num">09 / Audio-Haptic Alert</div><div class="bom-name">ERM Motor + Piezo Buzzer</div><div class="bom-desc">ERM haptic feedback motor (GPIO 5) + high-decibel passive piezo acoustic siren (GPIO 6 LEDC).</div></div>
+        <div class="bom-card reveal reveal-delay-1"><div class="bom-num">10 / Solar Controller</div><div class="bom-name">CN3065 Charge IC</div><div class="bom-desc">Complete CC/CV solar charging management IC with STAT pin telemetry output (GPIO 4).</div></div>
+        <div class="bom-card reveal reveal-delay-2"><div class="bom-num">11 / Photovoltaic</div><div class="bom-name">Flexible Solar Array</div><div class="bom-desc">Compact multi-junction flexible solar panel seamlessly laminated along the wrist strap structure.</div></div>
+        <div class="bom-card reveal reveal-delay-3"><div class="bom-num">12 / Power Protection</div><div class="bom-name">Schottky Barrier Diode</div><div class="bom-desc">Ultra-low forward drop (0.18V) reverse-current blocking — prevents battery drain into dark cells.</div></div>
+        <div class="bom-card reveal"><div class="bom-num">13 / Energy Storage</div><div class="bom-name">High-Density LiPo Cell</div><div class="bom-desc">3.7V nominal lithium-polymer battery with precision voltage divider ADC sampling on GPIO 0.</div></div>
+        <div class="bom-card reveal reveal-delay-1"><div class="bom-num">14 / Resilience</div><div class="bom-name">Conformal Coating + Gasket</div><div class="bom-desc">Silicone perimeter compression gasket with hydrophobic silicone PCB conformal barrier protection.</div></div>
+        <div class="bom-card reveal reveal-delay-2"><div class="bom-num">15 / Chassis</div><div class="bom-name">Matte-Black CNC Enclosure</div><div class="bom-desc">Compact aerospace-grade polymer & aluminum bezel with integrated solar strap mounting channels.</div></div>
+        <div class="bom-card reveal reveal-delay-3"><div class="bom-num">16 / Interconnects</div><div class="bom-name">Gold-Plated PCB & FPC</div><div class="bom-desc">High-reliability soldered flexible printed circuit jumpers and shielded I2C bus harness.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- FOOTER                                                        -->
+  <!-- ============================================================ -->
+  <footer id="solar-section">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <span class="footer-wordmark">CIRIS</span>
+        <span class="footer-tagline">Solar-Powered Health & Safety Smartwatch · ESP32-S3 Platform</span>
+      </div>
+      <div class="footer-links">
+        <a href="#architecture-section">Sensors</a>
+        <a href="#dashboard">Dashboard</a>
+        <a href="#specs">Specs</a>
+        <button onclick="openComplaintModal()" style="background:none;border:none;cursor:pointer;font-size:12.5px;color:var(--t3);">Support</button>
+      </div>
+      <a href="#" class="footer-back">
+        <i data-lucide="arrow-up"></i>
+        Back to top
+      </a>
+    </div>
+  </footer>
+
+  <!-- ============================================================ -->
+  <!-- AI DIAGNOSTICS & CHATGPT DRAWER                              -->
+  <!-- ============================================================ -->
+  <div id="ai-drawer">
+    <div class="drawer-header">
+      <div class="drawer-brand">
+        <div class="drawer-icon" style="background: linear-gradient(135deg, #10a37f 0%, #06b6d4 100%);">
+          <i data-lucide="bot"></i>
+        </div>
+        <div>
+          <div class="drawer-name">
+            ChatGPT Health Intelligence
+            <span class="drawer-active-dot" style="background:#10a37f;"></span>
+          </div>
+          <div class="drawer-sub">GPT-4o Medical & Hardware AI Assistant</div>
+        </div>
+      </div>
+      <button onclick="toggleAiDrawer()" class="drawer-close">
+        <i data-lucide="x"></i>
+      </button>
+    </div>
+
+    <div class="drawer-context">
+      <span>Live watch context:</span>
+      <div class="drawer-context-vals">
+        <span>HR: <b id="ai-mini-bpm" style="color:var(--cyan-l)">72 BPM</b></span>
+        <span>Temp: <b id="ai-mini-temp" style="color:var(--amber)">34.2°C</b></span>
+        <span>Solar: <b id="ai-mini-solar" style="color:var(--green-l)">28.4mA</b></span>
+      </div>
+    </div>
+
+    <div id="chat-messages"></div>
+
+    <div class="quick-prompts">
+      <button onclick="sendQuickPrompt('What is my current heart rate, SpO2, and heat index?')">🩺 Health Check</button>
+      <button onclick="sendQuickPrompt('How does the solar charging strap work in low sunlight?')">☀️ Solar Charging</button>
+      <button onclick="sendQuickPrompt('Who will be notified when the SOS panic button is pressed?')">🚨 Emergency Contacts</button>
+      <button onclick="sendQuickPrompt('How does the offline risk engine detect flash floods?')">🌧️ Flood Detection</button>
+    </div>
+
+    <form id="chat-form" class="chat-form" onsubmit="handleChatSubmit(event)">
+      <input id="chat-input" type="text" placeholder="Ask ChatGPT about health vitals, sensors, SOS..." autocomplete="off">
+      <button type="submit" class="chat-send" style="background: #10a37f;">
+        <i data-lucide="send"></i>
+      </button>
+    </form>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- FLOATING BOTTOM-RIGHT CHATBOT WIDGET                         -->
+  <!-- ============================================================ -->
+  <div class="chat-fab-widget" onclick="toggleAiDrawer()" title="Ask ChatGPT / Health AI Assistant">
+    <div class="chat-fab-tooltip">
+      <i data-lucide="sparkles" style="width:14px;height:14px;"></i>
+      <span>Chat with AI</span>
+    </div>
+    <div class="chat-fab-btn">
+      <i data-lucide="message-square" style="width:24px;height:24px;"></i>
+      <span class="chat-fab-dot"></span>
+    </div>
+  </div>
+
+
+
+
+  <!-- ============================================================ -->
+  <!-- SUPPORT MODAL                                                 -->
+  <!-- ============================================================ -->
+  <div id="complaint-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <button onclick="closeComplaintModal()" class="modal-close"><i data-lucide="x"></i></button>
+      <div class="modal-head">
+        <div class="modal-icon"><i data-lucide="life-buoy"></i></div>
+        <div>
+          <h3>Engineering Support & RMA Portal</h3>
+          <p>Automated diagnostic capture with active sensor state logging.</p>
+        </div>
+      </div>
+      <form id="complaint-form" onsubmit="handleComplaintSubmit(event)">
+        <div class="form-2">
+          <div class="form-group">
+            <label>Full Name</label>
+            <input id="ticket-name" type="text" placeholder="Dr. Sarah Connor" required>
+          </div>
+          <div class="form-group">
+            <label>Email Address</label>
+            <input id="ticket-email" type="email" placeholder="sarah@precision.tech">
+          </div>
+        </div>
+        <div class="form-2">
+          <div class="form-group">
+            <label>Hardware Category</label>
+            <select id="ticket-category">
+              <option>MAX30101 Biosensing</option>
+              <option>CN3065 Solar & Battery</option>
+              <option>BMI270 IMU Motion</option>
+              <option>Panic Button & Safety</option>
+              <option>Firmware & BLE Sync</option>
+              <option>Waterproofing & Chassis</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Subject</label>
+            <input id="ticket-subject" type="text" placeholder="e.g. Solar STAT pin fluctuation" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Technical Report</label>
+          <textarea id="ticket-message" rows="4" placeholder="Describe symptoms, environment, and reproduction steps..." required></textarea>
+        </div>
+        <div class="form-foot">
+          <span class="form-note"><i data-lucide="shield-check"></i> Live hardware log auto-attached</span>
+          <button type="submit" class="btn-primary">Submit Ticket</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SENSOR INJECTOR MODAL                                        -->
+  <!-- ============================================================ -->
+  <div id="sim-modal" class="modal-overlay hidden">
+    <div class="modal-box modal-box-sm">
+      <button onclick="toggleSimulationModal()" class="modal-close"><i data-lucide="x"></i></button>
+      <div class="modal-head">
+        <div class="modal-icon modal-icon-blue"><i data-lucide="sliders"></i></div>
+        <div>
+          <h3>Hardware Sensor Injector</h3>
+          <p>Inject physical anomalies and states into the live stream.</p>
+        </div>
+      </div>
+      <div class="sim-group">
+        <label>Motion Profile — BMI270</label>
+        <div class="sim-row-3">
+          <button onclick="injectMotion('IDLE')" class="sim-btn">Idle</button>
+          <button onclick="injectMotion('STEADY_WALK')" class="sim-btn">Walk</button>
+          <button onclick="injectMotion('RUNNING')" class="sim-btn">Run</button>
+        </div>
+        <button onclick="injectMotion('FALL_DETECTED')" class="sim-btn-warn">🚨 Inject Freefall Impact</button>
+      </div>
+      <div class="sim-group">
+        <label>Solar Lighting — CN3065</label>
+        <div class="sim-row-2">
+          <button onclick="injectSolar(true, 65000)" class="sim-btn-amber">☀️ Bright Sun (65k Lux)</button>
+          <button onclick="injectSolar(false, 150)" class="sim-btn-ghost">🌑 Pitch Black</button>
+        </div>
+      </div>
+      <div class="sim-group">
+        <label>Barometric Storm Injection</label>
+        <button onclick="injectEnvironment(988.4, 0.85, 88)" class="sim-btn-cyan">🌧️ Severe Storm — Pressure Drop (−25 hPa)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- AI DIAGNOSTICS & CHATGPT DRAWER                              -->
+  <!-- ============================================================ -->
+  <div id="ai-drawer">
+    <div class="drawer-header">
+      <div class="drawer-brand">
+        <div class="drawer-icon" style="background: linear-gradient(135deg, #10a37f 0%, #06b6d4 100%);">
+          <i data-lucide="bot"></i>
+        </div>
+        <div>
+          <div class="drawer-name">
+            ChatGPT Health Intelligence
+            <span class="drawer-active-dot" style="background:#10a37f;"></span>
+          </div>
+          <div class="drawer-sub">GPT-4o Medical & Hardware AI Assistant</div>
+        </div>
+      </div>
+      <button onclick="toggleAiDrawer()" class="drawer-close">
+        <i data-lucide="x"></i>
+      </button>
+    </div>
+
+    <div class="drawer-context">
+      <span>Live watch context:</span>
+      <div class="drawer-context-vals">
+        <span>HR: <b id="ai-mini-bpm" style="color:var(--cyan-l)">72 BPM</b></span>
+        <span>Temp: <b id="ai-mini-temp" style="color:var(--amber)">34.2°C</b></span>
+        <span>Solar: <b id="ai-mini-solar" style="color:var(--green-l)">28.4mA</b></span>
+      </div>
+    </div>
+
+    <div id="chat-messages"></div>
+
+    <div class="quick-prompts">
+      <button onclick="sendQuickPrompt('What is my current heart rate, SpO2, and heat index?')">🩺 Health Check</button>
+      <button onclick="sendQuickPrompt('How does the solar charging strap work in low sunlight?')">☀️ Solar Charging</button>
+      <button onclick="sendQuickPrompt('Who will be notified when the SOS panic button is pressed?')">🚨 Emergency Contacts</button>
+      <button onclick="sendQuickPrompt('How does the offline risk engine detect flash floods?')">🌧️ Flood Detection</button>
+    </div>
+
+    <form id="chat-form" class="chat-form" onsubmit="handleChatSubmit(event)">
+      <input id="chat-input" type="text" placeholder="Ask ChatGPT about health vitals, sensors, SOS..." autocomplete="off">
+      <button type="submit" class="chat-send" style="background: #10a37f;">
+        <i data-lucide="send"></i>
+      </button>
+    </form>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- FLOATING BOTTOM-RIGHT CHATBOT WIDGET                         -->
+  <!-- ============================================================ -->
+  <div class="chat-fab-widget" onclick="toggleAiDrawer()" title="Ask ChatGPT / Health AI Assistant">
+    <div class="chat-fab-tooltip">
+      <i data-lucide="sparkles" style="width:14px;height:14px;"></i>
+      <span>Chat with AI</span>
+    </div>
+    <div class="chat-fab-btn">
+      <i data-lucide="message-square"></i>
+      <span class="chat-fab-pulse"></span>
+    </div>
+  </div>
+
+  <script src="scrollytelling.js?v=3.4"></script>
+  <script src="telemetry.js?v=3.4"></script>
+  <script src="ml_platform_ui.js"></script>
+  <script src="chatbot.js?v=3.4"></script>
+  <script>
+    lucide.createIcons();
+
+    // Modal helpers
+    function openComplaintModal() {
+      document.getElementById('complaint-modal').classList.remove('hidden');
+    }
+    function closeComplaintModal() {
+      document.getElementById('complaint-modal').classList.add('hidden');
+    }
+
+    // Scroll-reveal for below-canvas sections
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('in-view');
+          revealObserver.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12 });
+
+    document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+    // Nav scrolled state
+    window.addEventListener('scroll', () => {
+      const nav = document.getElementById('navbar');
+      if (nav) {
+        nav.classList.toggle('scrolled', window.scrollY > 40);
+      }
+    }, { passive: true });
+
+    // Authentication Gate Handling
+    function switchAuthTab(mode) {
+      const tabLogin = document.getElementById('tab-login');
+      const tabReg = document.getElementById('tab-register');
+      const grpName = document.getElementById('group-name');
+      const grpContacts = document.getElementById('group-emergency-contacts');
+      const submitBtn = document.getElementById('auth-submit-btn');
+
+      if (mode === 'register') {
+        tabReg.classList.add('active');
+        tabLogin.classList.remove('active');
+        if (grpName) grpName.style.display = 'block';
+        if (grpContacts) grpContacts.style.display = 'block';
+        submitBtn.textContent = 'Register Band & Save 3 Emergency Contacts';
+      } else {
+        tabLogin.classList.add('active');
+        tabReg.classList.remove('active');
+        if (grpName) grpName.style.display = 'none';
+        if (grpContacts) grpContacts.style.display = 'none';
+        submitBtn.textContent = 'Unlock & Launch Dashboard';
+      }
+    }
+
+    function handleAuthSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('auth-email').value;
+      const pass = document.getElementById('auth-password').value;
+      
+      const contacts = [
+        {
+          priority: 1,
+          name: document.getElementById('contact-1-name')?.value || 'Primary Caregiver',
+          phone: document.getElementById('contact-1-phone')?.value || '+1-555-0192'
+        },
+        {
+          priority: 2,
+          name: document.getElementById('contact-2-name')?.value || 'Secondary Contact',
+          phone: document.getElementById('contact-2-phone')?.value || '+1-555-0193'
+        },
+        {
+          priority: 3,
+          name: document.getElementById('contact-3-name')?.value || 'Emergency Rescue Services',
+          phone: document.getElementById('contact-3-phone')?.value || '112'
+        }
+      ];
+
+      sessionStorage.setItem('ciris_auth_token', 'jwt_' + btoa(email + ':' + Date.now()));
+      sessionStorage.setItem('ciris_user_email', email);
+      sessionStorage.setItem('ciris_emergency_contacts', JSON.stringify(contacts));
+      
+      const modal = document.getElementById('auth-gate-modal');
+      modal.classList.add('hidden');
+    }
+
+    function bypassAuthGuest() {
+      sessionStorage.setItem('ciris_auth_token', 'guest_demo_' + Date.now());
+      sessionStorage.setItem('ciris_user_email', 'guest@ciris-guardian.io');
+      sessionStorage.setItem('ciris_emergency_contacts', JSON.stringify([
+        { priority: 1, name: 'Dr. Sarah Connor', phone: '+1-555-0100' },
+        { priority: 2, name: 'Marcus Vance', phone: '+1-555-0101' },
+        { priority: 3, name: 'Disaster Relief / 112', phone: '112' }
+      ]));
+      const modal = document.getElementById('auth-gate-modal');
+      modal.classList.add('hidden');
+    }
+
+    // Check existing session
+    if (sessionStorage.getItem('ciris_auth_token')) {
+      const modal = document.getElementById('auth-gate-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+  </script>
+</body>
+</html>
