@@ -222,11 +222,27 @@
   function updateDOM(d) {
     liveTelemetry = d;
 
-    // Optical
-    set('telemetry-bpm', d.heartRateBpm);
-    set('telemetry-spo2', d.spo2Pct);
+    // Optical with smooth tweening
+    if (window.tweenNumber) {
+      window.tweenNumber('telemetry-bpm', d.heartRateBpm, 0);
+      window.tweenNumber('telemetry-spo2', d.spo2Pct, 1);
+      window.tweenNumber('telemetry-skin-temp', d.skinTempC, 1);
+      window.tweenNumber('telemetry-solar-ma', d.solarCurrentMa, 1);
+      window.tweenNumber('telemetry-battery-pct', d.batteryPct, 0);
+    } else {
+      set('telemetry-bpm', d.heartRateBpm);
+      set('telemetry-spo2', d.spo2Pct);
+      set('telemetry-skin-temp', d.skinTempC);
+      set('telemetry-solar-ma', d.solarCurrentMa);
+      set('telemetry-battery-pct', d.batteryPct);
+    }
     set('telemetry-ppg-raw', d.ppgRawValue + ' ADC');
     set('telemetry-pi', d.perfusionIndex + '%');
+
+    // Call Personal Health Profile Engine
+    if (window.computeHealthScore) {
+      window.computeHealthScore(d);
+    }
 
     // Multi-Modal Trained ML Model Inference (Synchronized with 5 Million Dataset)
     const means = [93.79, 36.06, 96.28, 34.49, 25.89, 53.85, 2.75, 77.96, 1011.76, 0.12];
@@ -327,11 +343,13 @@
       compEl.textContent = compScore.toFixed(3);
     }
 
+    // Dynamic Atmosphere & Title Update
+    document.title = (tier === 'RED' ? '🚨 [SOS CRITICAL] ' : (tier === 'ORANGE' ? '⚠️ [WARNING] ' : '')) + 'CIRIS — Solar-Powered Health & Safety Smartwatch';
+
     // AI context strip
     set('ai-mini-bpm', d.heartRateBpm + ' BPM');
     set('ai-mini-temp', d.skinTempC + '°C');
     set('ai-mini-solar', d.solarCurrentMa + 'mA');
-
 
     // PPG buffer
     ppgBuffer.push(d.ppgRawValue);
@@ -346,7 +364,6 @@
     set('motion-badge', d.motionState);
 
     // Thermal
-    set('telemetry-skin-temp', d.skinTempC);
     set('telemetry-ambient-temp', d.ambientTempC);
     set('telemetry-humidity', d.ambientHumidityPct + '%');
     const hiRisk = d.heatIndexC > 32 ? 'Caution' : 'Normal';
@@ -363,9 +380,7 @@
     const floodBar = document.getElementById('flood-bar');
     if (floodBar) floodBar.style.width = Math.min(100, d.floodRiskScore * 100) + '%';
 
-    // Power
-    set('telemetry-solar-ma', d.solarCurrentMa);
-    set('telemetry-battery-pct', d.batteryPct);
+    // Power & Solar Flow
     set('telemetry-battery-v', d.batteryVoltage + ' V');
     set('telemetry-lux', (d.solarIrradianceLux || 48500).toLocaleString() + ' Lux');
     const battBar = document.getElementById('battery-bar');
@@ -377,6 +392,20 @@
       solarBadge.className   = d.solarCharging
         ? 'tcard-badge tcard-badge-amber'
         : 'tcard-badge';
+    }
+
+    // Solar particle flow nodes update
+    const panelNode = document.getElementById('flow-node-panel');
+    const cnNode = document.getElementById('flow-node-cn3065');
+    const battNode = document.getElementById('flow-node-battery');
+    if (panelNode && cnNode && battNode) {
+      panelNode.classList.toggle('active', d.solarCharging);
+      cnNode.classList.toggle('active', d.solarCharging);
+      battNode.classList.toggle('active', d.solarCharging);
+      const valPanel = document.getElementById('flow-val-panel');
+      const valCn = document.getElementById('flow-val-cn');
+      if (valPanel) valPanel.textContent = `${d.solarCurrentMa} mA`;
+      if (valCn) valCn.textContent = `${d.solarVoltage} V`;
     }
 
     // Panic / Safety

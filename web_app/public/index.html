@@ -7,9 +7,13 @@
   <meta name="description" content="Next-generation solar-powered smartwatch engineered for health, safety, and energy independence. Built around ESP32-S3 with MAX30101, BMI270, SHT31, CN3065 and more.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;0,14..32,900;1,14..32,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#07090c">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-  <link rel="stylesheet" href="style.css?v=3.3">
+  <link rel="stylesheet" href="styles/tokens.css">
+  <link rel="stylesheet" href="styles/components.css">
+  <link rel="stylesheet" href="style.css?v=3.5">
 </head>
 <body>
 
@@ -110,10 +114,7 @@
         </button>
 
         <div style="margin-top:14px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.08); text-align:center;">
-          <button type="button" onclick="toggleAiDrawer()" style="display:inline-flex; align-items:center; gap:7px; font-size:12px; color:var(--cyan-l); font-weight:600; cursor:pointer;">
-            <i data-lucide="bot" style="width:14px;height:14px;"></i>
-            Have queries? Ask ChatGPT AI Assistant
-          </button>
+          <span style="font-size:11.5px; color:var(--text-muted);">CIRIS Platform · Offline-First Early-Warning Telemetry Core</span>
         </div>
       </div>
     </div>
@@ -129,33 +130,51 @@
         <div class="nav-logo-mark">C</div>
         <span class="nav-wordmark">CIRIS</span>
       </a>
-      <div class="nav-live-pill">
+      <div class="nav-live-pill" id="navbar-live-pill">
         <span class="nav-live-dot"></span>
         ESP32-S3 Live
       </div>
     </div>
 
-
     <div class="nav-links">
+      <a href="#dashboard" class="nav-link-accent">Live Dashboard</a>
       <a href="#architecture-section">Sensors</a>
       <a href="#safety-section">Safety</a>
       <a href="#solar-section">Solar</a>
-      <a href="#dashboard" class="nav-link-accent">Live Dashboard</a>
       <a href="#ml-datasets-section">ML & Datasets</a>
       <a href="#specs">Specs</a>
       <button onclick="openComplaintModal()">Support</button>
     </div>
 
     <div class="nav-actions">
+      <!-- Quick Cmd+K Palette Trigger -->
+      <button class="nav-icon-btn" onclick="window.commandPalette && window.commandPalette.open()" title="Command Palette (Cmd+K)" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:6px 10px; color:var(--text-secondary); display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer;">
+        <i data-lucide="command" style="width:13px;height:13px;"></i>
+        <kbd style="font-family:var(--font-mono); font-size:10px; opacity:0.7;">⌘K</kbd>
+      </button>
+
+      <!-- Theme Switcher (Dark / Clinical White) -->
+      <button id="theme-toggle-btn" class="nav-icon-btn" onclick="window.personalizationStore && window.personalizationStore.toggleTheme()" title="Toggle Clinical White / Deep Dark" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:6px 10px; color:var(--text-secondary); display:flex; align-items:center; cursor:pointer;">
+        <i data-lucide="sun" id="theme-toggle-icon" style="width:14px;height:14px;"></i>
+      </button>
+
+      <!-- Simulation Lab Trigger -->
+      <button class="nav-icon-btn" onclick="window.simulationLab && window.simulationLab.toggleDrawer()" title="Simulation Lab" style="background:rgba(6,182,212,0.12); border:1px solid rgba(6,182,212,0.3); border-radius:8px; padding:6px 10px; color:var(--cyan); display:flex; align-items:center; gap:6px; font-size:12px; font-weight:600; cursor:pointer;">
+        <i data-lucide="sliders" style="width:13px;height:13px;"></i>
+        <span>Sim Lab</span>
+      </button>
+
+      <!-- AI Assistant Button -->
       <button class="nav-ai-btn" onclick="toggleAiDrawer()" id="nav-ai-btn">
         <i data-lucide="sparkles"></i>
-        AI Diagnostics
+        <span>CIRIS Assistant</span>
         <span class="ai-dot"></span>
       </button>
-      <a href="#dashboard" class="nav-cta">
-        Live Dashboard
-        <i data-lucide="arrow-right"></i>
-      </a>
+
+      <!-- Settings Drawer Trigger -->
+      <button class="nav-icon-btn" onclick="window.personalizationStore && window.personalizationStore.toggleSettings()" title="Band & Display Settings" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:6px 10px; color:var(--text-secondary); display:flex; align-items:center; cursor:pointer;">
+        <i data-lucide="settings" style="width:14px;height:14px;"></i>
+      </button>
     </div>
   </nav>
 
@@ -440,22 +459,47 @@
           <p class="section-sub">High-frequency decoded packets from the ESP32-S3 sensor bus, streamed via simulated BLE GATT.</p>
         </div>
         <div class="dash-actions">
-          <div class="live-pill">
+          <div class="live-pill" id="dashboard-live-pill">
             <span class="live-pill-dot"></span>
-            50Hz BLE GATT
+            50Hz BLE GATT · Synced
           </div>
-          <button onclick="exportTelemetry('json')" class="dash-btn">
+          <button onclick="exportTelemetry('json')" class="dash-btn" title="Export Raw Telemetry JSON">
             <i data-lucide="download"></i>
             JSON
           </button>
-          <button onclick="exportTelemetry('csv')" class="dash-btn">
+          <button onclick="exportTelemetry('csv')" class="dash-btn" title="Export CSV Packet Log">
             <i data-lucide="file-spreadsheet"></i>
             CSV
           </button>
-          <button onclick="toggleSimulationModal()" class="dash-btn dash-btn-accent">
+          <button onclick="window.simulationLab && window.simulationLab.toggleDrawer()" class="dash-btn dash-btn-accent" title="Open Simulation Lab">
             <i data-lucide="sliders"></i>
-            Sensor Injector
+            Simulation Lab
           </button>
+        </div>
+      </div>
+
+      <!-- PERSONALIZED WEARER HERO BAR -->
+      <div class="wearer-hero-bar reveal" id="wearer-hero-bar">
+        <div class="wearer-profile-card">
+          <div class="wearer-avatar" id="wearer-avatar">MR</div>
+          <div class="wearer-meta">
+            <div class="wearer-greeting" id="wearer-greeting">Good evening, Monish</div>
+            <div class="wearer-sub-row">
+              <span class="wearer-band-id" id="wearer-band-id">BAND-ESP32-S3-4882</span>
+              <span class="wearer-sync-pill">
+                <span class="wearer-sync-dot"></span>
+                <span id="wearer-last-sync">Synced just now</span>
+              </span>
+              <span class="guest-demo-pill" id="guest-mode-pill" style="display:none;">Demo data</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="dash-view-presets" role="tablist" aria-label="Dashboard Presets">
+          <button class="preset-pill active" onclick="window.personalizationStore && window.personalizationStore.setPreset('wellness', this)">Daily Wellness</button>
+          <button class="preset-pill" onclick="window.personalizationStore && window.personalizationStore.setPreset('outdoor', this)">Outdoor / Storm</button>
+          <button class="preset-pill" onclick="window.personalizationStore && window.personalizationStore.setPreset('caregiver', this)">Caregiver View</button>
+          <button class="preset-pill" onclick="window.personalizationStore && window.personalizationStore.setPreset('engineer', this)">Engineer ADC</button>
         </div>
       </div>
 
@@ -487,8 +531,80 @@
         </div>
       </div>
 
-      <!-- Telemetry cards -->
-      <div class="tgrid">
+      <!-- Telemetry cards (Bento Grid) -->
+      <div class="tgrid" id="main-telemetry-grid">
+
+        <!-- PERSONAL HEALTH SCORE & BASELINE DEVIATIONS -->
+        <div class="tcard tcard-hero-score reveal">
+          <div class="tcard-header">
+            <div class="tcard-icon ti-cyan"><i data-lucide="activity"></i></div>
+            <div class="tcard-meta">
+              <div class="tcard-name">Wearer Health Score</div>
+              <div class="tcard-sub">Multi-Modal Baseline Index</div>
+            </div>
+            <span class="tcard-badge tb-green" id="health-index-badge">Optimal Range</span>
+          </div>
+
+          <div class="score-card-body">
+            <div class="score-ring-wrap">
+              <svg viewBox="0 0 120 120" class="score-svg" width="110" height="110">
+                <circle class="score-circle-bg" cx="60" cy="60" r="50"></circle>
+                <circle id="health-score-ring" class="score-circle-fill" cx="60" cy="60" r="50" stroke-dasharray="314.15" stroke-dashoffset="25"></circle>
+              </svg>
+              <div class="score-center-text">
+                <span id="health-score-val" class="score-number">92</span>
+                <span class="score-subtext">/100</span>
+              </div>
+            </div>
+            <div class="score-insights-col">
+              <div class="score-verdict" id="health-insight-title">Excellent Physiological Stability</div>
+              <div class="score-baseline-desc" id="health-insight-desc">Vitals, skin thermal flux, and motion cadence closely match your learned baselines.</div>
+              <div class="baseline-chips">
+                <div class="baseline-chip">
+                  <span class="b-lbl">Resting HR:</span>
+                  <span class="b-val" id="baseline-hr-chip">68 bpm</span>
+                  <span class="b-delta" id="baseline-hr-diff">+4</span>
+                </div>
+                <div class="baseline-chip">
+                  <span class="b-lbl">Target SpO2:</span>
+                  <span class="b-val" id="baseline-spo2-chip">98.5%</span>
+                  <span class="b-delta" id="baseline-spo2-diff">Nominal</span>
+                </div>
+                <div class="baseline-chip">
+                  <span class="b-lbl">Skin Baseline:</span>
+                  <span class="b-val" id="baseline-temp-chip">34.0°C</span>
+                  <span class="b-delta" id="baseline-temp-diff">+0.2</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="tcard-footer">
+            <span>Model: <b>Continuous Kalman Filter</b></span>
+            <span>Reliability: <b style="color:var(--green-l)">99.4% Confidence</b></span>
+          </div>
+        </div>
+
+        <!-- EMERGENCY ESCALATION STATUS CARD -->
+        <div class="tcard reveal">
+          <div class="tcard-header">
+            <div class="tcard-icon ti-red"><i data-lucide="shield-alert"></i></div>
+            <div class="tcard-meta">
+              <div class="tcard-name">Active Escalation Chain</div>
+              <div class="tcard-sub">Automatic Fall & SOS Dispatch</div>
+            </div>
+            <span class="tcard-badge tb-cyan" id="escalation-badge">Armed</span>
+          </div>
+
+          <div class="escalation-chain-list" id="escalation-contacts-list">
+            <!-- Populated dynamically via personalization.js -->
+          </div>
+
+          <div class="tcard-footer">
+            <span>Fallback: <b>112 Municipal Rescue</b></span>
+            <span>Fail-Safe: <b style="color:var(--green-l)">Sub-GHz / BLE Mesh</b></span>
+          </div>
+        </div>
 
         <!-- CARD 1: MAX30101 -->
         <div class="tcard reveal">
@@ -638,18 +754,19 @@
           </div>
         </div>
 
-        <!-- CARD 5: CN3065 Solar -->
-        <div class="tcard reveal reveal-delay-1">
+        <!-- CARD 5: CN3065 Solar & Autonomous Net-Flow -->
+        <div class="tcard reveal reveal-delay-1" id="solar-flow-card">
           <div class="tcard-header">
             <div class="tcard-icon ti-amber">
               <i data-lucide="sun" style="animation:spin 14s linear infinite;"></i>
             </div>
             <div class="tcard-meta">
-              <div class="tcard-name">CN3065 Solar Power</div>
+              <div class="tcard-name">CN3065 Autonomous Solar</div>
               <div class="tcard-sub">Strap Photovoltaic + Schottky</div>
             </div>
             <span id="solar-stat-badge" class="tcard-badge tb-amber">Harvesting</span>
           </div>
+
           <div class="metrics-2">
             <div class="metric-block">
               <div class="metric-label">Solar Current</div>
@@ -660,6 +777,41 @@
               <div class="metric-value m-green"><span id="telemetry-battery-pct">84</span><span class="metric-unit">%</span></div>
             </div>
           </div>
+
+          <!-- Dynamic Solar Net-Flow Particle Chain -->
+          <div class="solar-flow-container">
+            <div class="flow-track-line">
+              <div class="flow-particle particle-1"></div>
+              <div class="flow-particle particle-2"></div>
+              <div class="flow-particle particle-3"></div>
+            </div>
+            <div class="flow-nodes">
+              <div class="flow-node active" id="flow-node-panel" title="Photovoltaic Strap">
+                <i data-lucide="sun" style="width:13px;height:13px;"></i>
+                <span>Panel</span>
+                <span class="node-val" id="flow-val-panel">28.4 mA</span>
+              </div>
+              <div class="flow-arrow">→</div>
+              <div class="flow-node active" id="flow-node-schottky" title="Schottky Diode">
+                <i data-lucide="zap" style="width:13px;height:13px;"></i>
+                <span>Diode</span>
+                <span class="node-val">0.18V Drop</span>
+              </div>
+              <div class="flow-arrow">→</div>
+              <div class="flow-node active" id="flow-node-cn3065" title="CN3065 MPPT/CC-CV">
+                <i data-lucide="cpu" style="width:13px;height:13px;"></i>
+                <span>CN3065</span>
+                <span class="node-val" id="flow-val-cn">4.18 V</span>
+              </div>
+              <div class="flow-arrow">→</div>
+              <div class="flow-node active" id="flow-node-battery" title="LiPo Cell">
+                <i data-lucide="battery-charging" style="width:13px;height:13px;"></i>
+                <span>LiPo</span>
+                <span class="node-val" id="flow-val-batt">3.94 V</span>
+              </div>
+            </div>
+          </div>
+
           <div class="bar-block">
             <div class="bar-row">
               <span>LiPo Cell Voltage</span>
@@ -673,7 +825,7 @@
           </div>
           <div class="tcard-footer">
             <span>Net Flow: <b style="color:var(--green-l)">+112 mW Positive</b></span>
-            <span>Mode: <b style="color:var(--cyan-l)">Perpetual Daylight</b></span>
+            <span>Mode: <b style="color:var(--cyan-l)">Solar-Assisted Harvesting</b></span>
           </div>
         </div>
 
@@ -1042,27 +1194,42 @@
           <span class="section-eyebrow-dot"></span>
           Engineering Blueprint
         </div>
-        <h2 class="section-title" id="safety-section">Bill of Materials</h2>
-        <p class="section-sub" style="margin-left:auto; margin-right:auto; text-align:center;">Every component verified against the physical schematic and firmware architecture.</p>
+        <h2 class="section-title">Bill of Materials & Hardware Specs</h2>
+        <p class="section-sub" style="margin-left:auto; margin-right:auto; text-align:center;">Every component verified against the physical schematic, pin maps, and firmware architecture.</p>
+        
+        <!-- BOM Category Filters and Real-time Search -->
+        <div class="bom-controls" style="margin-top:24px; display:flex; flex-wrap:wrap; justify-content:center; gap:10px; align-items:center;">
+          <div class="bom-search-wrap" style="position:relative; max-width:280px; width:100%;">
+            <input type="text" id="bom-search-input" placeholder="Search components, GPIO, I2C..." oninput="filterBomCards()" style="width:100%; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:7px 12px; font-size:12.5px; color:#fff;">
+          </div>
+          <div class="bom-filter-chips" style="display:flex; flex-wrap:wrap; gap:6px;">
+            <button class="bom-chip active" onclick="setBomFilter('all', this)">All (16)</button>
+            <button class="bom-chip" onclick="setBomFilter('compute', this)">Compute</button>
+            <button class="bom-chip" onclick="setBomFilter('sensor', this)">Sensing</button>
+            <button class="bom-chip" onclick="setBomFilter('power', this)">Power & Solar</button>
+            <button class="bom-chip" onclick="setBomFilter('safety', this)">Safety & Alert</button>
+            <button class="bom-chip" onclick="setBomFilter('mech', this)">Mechanical</button>
+          </div>
+        </div>
       </div>
 
-      <div class="bom-grid">
-        <div class="bom-card reveal"><div class="bom-num">01 / MCU Core</div><div class="bom-name">ESP32-S3 Microcontroller</div><div class="bom-desc">Dual-core Xtensa® LX7 @ 240MHz, 512KB SRAM, 8MB PSRAM, Wi-Fi & BLE 5.0 mesh.</div></div>
-        <div class="bom-card reveal reveal-delay-1"><div class="bom-num">02 / Display</div><div class="bom-name">0.96" OLED SSD1306</div><div class="bom-desc">128×64 monochrome high-contrast, non-blocking U8g2 hardware I2C driver (0x3C).</div></div>
-        <div class="bom-card reveal reveal-delay-2"><div class="bom-num">03 / Optical Sensing</div><div class="bom-name">MAX30101 Optical Sensor</div><div class="bom-desc">Pulse oximeter & heart-rate monitor with Green & IR LEDs, ambient light cancellation (0x57).</div></div>
-        <div class="bom-card reveal reveal-delay-3"><div class="bom-num">04 / Motion IMU</div><div class="bom-name">BMI270 6-Axis IMU</div><div class="bom-desc">Ultra-low power 16-bit 3-axis accelerometer + gyroscope with hardware step counter (0x68).</div></div>
-        <div class="bom-card reveal"><div class="bom-num">05 / Ambient Climate</div><div class="bom-name">SHT31 Temp & Humidity</div><div class="bom-desc">Sensirion high-accuracy humidity ±2% RH and ambient temperature ±0.2°C (0x44).</div></div>
-        <div class="bom-card reveal reveal-delay-1"><div class="bom-num">06 / Clinical Body Temp</div><div class="bom-name">MAX30208 / TMP117</div><div class="bom-desc">Dedicated ±0.1°C clinical epidermal skin temperature with direct thermal pad contact (0x50).</div></div>
-        <div class="bom-card reveal reveal-delay-2"><div class="bom-num">07 / Barometric & Flood</div><div class="bom-name">BME280 Pressure Module</div><div class="bom-desc">Atmospheric pressure 300–1100 hPa, altitude tracking, and barometric drop flood alerts (0x76).</div></div>
-        <div class="bom-card reveal reveal-delay-3"><div class="bom-num">08 / Emergency Input</div><div class="bom-name">Tactile Panic Button</div><div class="bom-desc">Waterproof silicone-sealed physical switch on GPIO 3 with hardware-debounced ISR interrupt.</div></div>
-        <div class="bom-card reveal"><div class="bom-num">09 / Audio-Haptic Alert</div><div class="bom-name">ERM Motor + Piezo Buzzer</div><div class="bom-desc">ERM haptic feedback motor (GPIO 5) + high-decibel passive piezo acoustic siren (GPIO 6 LEDC).</div></div>
-        <div class="bom-card reveal reveal-delay-1"><div class="bom-num">10 / Solar Controller</div><div class="bom-name">CN3065 Charge IC</div><div class="bom-desc">Complete CC/CV solar charging management IC with STAT pin telemetry output (GPIO 4).</div></div>
-        <div class="bom-card reveal reveal-delay-2"><div class="bom-num">11 / Photovoltaic</div><div class="bom-name">Flexible Solar Array</div><div class="bom-desc">Compact multi-junction flexible solar panel seamlessly laminated along the wrist strap structure.</div></div>
-        <div class="bom-card reveal reveal-delay-3"><div class="bom-num">12 / Power Protection</div><div class="bom-name">Schottky Barrier Diode</div><div class="bom-desc">Ultra-low forward drop (0.18V) reverse-current blocking — prevents battery drain into dark cells.</div></div>
-        <div class="bom-card reveal"><div class="bom-num">13 / Energy Storage</div><div class="bom-name">High-Density LiPo Cell</div><div class="bom-desc">3.7V nominal lithium-polymer battery with precision voltage divider ADC sampling on GPIO 0.</div></div>
-        <div class="bom-card reveal reveal-delay-1"><div class="bom-num">14 / Resilience</div><div class="bom-name">Conformal Coating + Gasket</div><div class="bom-desc">Silicone perimeter compression gasket with hydrophobic silicone PCB conformal barrier protection.</div></div>
-        <div class="bom-card reveal reveal-delay-2"><div class="bom-num">15 / Chassis</div><div class="bom-name">Matte-Black CNC Enclosure</div><div class="bom-desc">Compact aerospace-grade polymer & aluminum bezel with integrated solar strap mounting channels.</div></div>
-        <div class="bom-card reveal reveal-delay-3"><div class="bom-num">16 / Interconnects</div><div class="bom-name">Gold-Plated PCB & FPC</div><div class="bom-desc">High-reliability soldered flexible printed circuit jumpers and shielded I2C bus harness.</div></div>
+      <div class="bom-grid" id="bom-grid">
+        <div class="bom-card reveal" data-category="compute"><div class="bom-num">01 / MCU Core</div><div class="bom-name">ESP32-S3 Microcontroller</div><div class="bom-desc">Dual-core Xtensa® LX7 @ 240MHz, 512KB SRAM, 8MB PSRAM, Wi-Fi & BLE 5.0 mesh.</div></div>
+        <div class="bom-card reveal reveal-delay-1" data-category="compute"><div class="bom-num">02 / Display</div><div class="bom-name">0.96" OLED SSD1306</div><div class="bom-desc">128×64 monochrome high-contrast, non-blocking U8g2 hardware I2C driver (0x3C).</div></div>
+        <div class="bom-card reveal reveal-delay-2" data-category="sensor"><div class="bom-num">03 / Optical Sensing</div><div class="bom-name">MAX30101 Optical Sensor</div><div class="bom-desc">Pulse oximeter & heart-rate monitor with Green & IR LEDs, ambient light cancellation (0x57).</div></div>
+        <div class="bom-card reveal reveal-delay-3" data-category="sensor"><div class="bom-num">04 / Motion IMU</div><div class="bom-name">BMI270 6-Axis IMU</div><div class="bom-desc">Ultra-low power 16-bit 3-axis accelerometer + gyroscope with hardware step counter (0x68).</div></div>
+        <div class="bom-card reveal" data-category="sensor"><div class="bom-num">05 / Ambient Climate</div><div class="bom-name">SHT31 Temp & Humidity</div><div class="bom-desc">Sensirion high-accuracy humidity ±2% RH and ambient temperature ±0.2°C (0x44).</div></div>
+        <div class="bom-card reveal reveal-delay-1" data-category="sensor"><div class="bom-num">06 / Clinical Body Temp</div><div class="bom-name">MAX30208 / TMP117</div><div class="bom-desc">Dedicated ±0.1°C clinical epidermal skin temperature with direct thermal pad contact (0x50).</div></div>
+        <div class="bom-card reveal reveal-delay-2" data-category="sensor"><div class="bom-num">07 / Barometric & Flood</div><div class="bom-name">BME280 Pressure Module</div><div class="bom-desc">Atmospheric pressure 300–1100 hPa, altitude tracking, and barometric drop flood alerts (0x76).</div></div>
+        <div class="bom-card reveal reveal-delay-3" data-category="safety"><div class="bom-num">08 / Emergency Input</div><div class="bom-name">Tactile Panic Button</div><div class="bom-desc">Waterproof silicone-sealed physical switch on GPIO 3 with hardware-debounced ISR interrupt.</div></div>
+        <div class="bom-card reveal" data-category="safety"><div class="bom-num">09 / Audio-Haptic Alert</div><div class="bom-name">ERM Motor + Piezo Buzzer</div><div class="bom-desc">ERM haptic feedback motor (GPIO 5) + high-decibel passive piezo acoustic siren (GPIO 6 LEDC).</div></div>
+        <div class="bom-card reveal reveal-delay-1" data-category="power"><div class="bom-num">10 / Solar Controller</div><div class="bom-name">CN3065 Charge IC</div><div class="bom-desc">Complete CC/CV solar charging management IC with STAT pin telemetry output (GPIO 4).</div></div>
+        <div class="bom-card reveal reveal-delay-2" data-category="power"><div class="bom-num">11 / Photovoltaic</div><div class="bom-name">Flexible Solar Array</div><div class="bom-desc">Compact multi-junction flexible solar panel seamlessly laminated along the wrist strap structure.</div></div>
+        <div class="bom-card reveal reveal-delay-3" data-category="power"><div class="bom-num">12 / Power Protection</div><div class="bom-name">Schottky Barrier Diode</div><div class="bom-desc">Ultra-low forward drop (0.18V) reverse-current blocking — prevents battery drain into dark cells.</div></div>
+        <div class="bom-card reveal" data-category="power"><div class="bom-num">13 / Energy Storage</div><div class="bom-name">High-Density LiPo Cell</div><div class="bom-desc">3.7V nominal lithium-polymer battery with precision voltage divider ADC sampling on GPIO 0.</div></div>
+        <div class="bom-card reveal reveal-delay-1" data-category="mech"><div class="bom-num">14 / Resilience</div><div class="bom-name">Conformal Coating + Gasket</div><div class="bom-desc">Silicone perimeter compression gasket with hydrophobic silicone PCB conformal barrier protection.</div></div>
+        <div class="bom-card reveal reveal-delay-2" data-category="mech"><div class="bom-num">15 / Chassis</div><div class="bom-name">Matte-Black CNC Enclosure</div><div class="bom-desc">Compact aerospace-grade polymer & aluminum bezel with integrated solar strap mounting channels.</div></div>
+        <div class="bom-card reveal reveal-delay-3" data-category="mech"><div class="bom-num">16 / Interconnects</div><div class="bom-name">Gold-Plated PCB & FPC</div><div class="bom-desc">High-reliability soldered flexible printed circuit jumpers and shielded I2C bus harness.</div></div>
       </div>
     </div>
   </section>
@@ -1089,67 +1256,7 @@
     </div>
   </footer>
 
-  <!-- ============================================================ -->
-  <!-- AI DIAGNOSTICS & CHATGPT DRAWER                              -->
-  <!-- ============================================================ -->
-  <div id="ai-drawer">
-    <div class="drawer-header">
-      <div class="drawer-brand">
-        <div class="drawer-icon" style="background: linear-gradient(135deg, #10a37f 0%, #06b6d4 100%);">
-          <i data-lucide="bot"></i>
-        </div>
-        <div>
-          <div class="drawer-name">
-            ChatGPT Health Intelligence
-            <span class="drawer-active-dot" style="background:#10a37f;"></span>
-          </div>
-          <div class="drawer-sub">GPT-4o Medical & Hardware AI Assistant</div>
-        </div>
-      </div>
-      <button onclick="toggleAiDrawer()" class="drawer-close">
-        <i data-lucide="x"></i>
-      </button>
-    </div>
 
-    <div class="drawer-context">
-      <span>Live watch context:</span>
-      <div class="drawer-context-vals">
-        <span>HR: <b id="ai-mini-bpm" style="color:var(--cyan-l)">72 BPM</b></span>
-        <span>Temp: <b id="ai-mini-temp" style="color:var(--amber)">34.2°C</b></span>
-        <span>Solar: <b id="ai-mini-solar" style="color:var(--green-l)">28.4mA</b></span>
-      </div>
-    </div>
-
-    <div id="chat-messages"></div>
-
-    <div class="quick-prompts">
-      <button onclick="sendQuickPrompt('What is my current heart rate, SpO2, and heat index?')">🩺 Health Check</button>
-      <button onclick="sendQuickPrompt('How does the solar charging strap work in low sunlight?')">☀️ Solar Charging</button>
-      <button onclick="sendQuickPrompt('Who will be notified when the SOS panic button is pressed?')">🚨 Emergency Contacts</button>
-      <button onclick="sendQuickPrompt('How does the offline risk engine detect flash floods?')">🌧️ Flood Detection</button>
-    </div>
-
-    <form id="chat-form" class="chat-form" onsubmit="handleChatSubmit(event)">
-      <input id="chat-input" type="text" placeholder="Ask ChatGPT about health vitals, sensors, SOS..." autocomplete="off">
-      <button type="submit" class="chat-send" style="background: #10a37f;">
-        <i data-lucide="send"></i>
-      </button>
-    </form>
-  </div>
-
-  <!-- ============================================================ -->
-  <!-- FLOATING BOTTOM-RIGHT CHATBOT WIDGET                         -->
-  <!-- ============================================================ -->
-  <div class="chat-fab-widget" onclick="toggleAiDrawer()" title="Ask ChatGPT / Health AI Assistant">
-    <div class="chat-fab-tooltip">
-      <i data-lucide="sparkles" style="width:14px;height:14px;"></i>
-      <span>Chat with AI</span>
-    </div>
-    <div class="chat-fab-btn">
-      <i data-lucide="message-square" style="width:24px;height:24px;"></i>
-      <span class="chat-fab-dot"></span>
-    </div>
-  </div>
 
 
 
@@ -1244,20 +1351,20 @@
   </div>
 
   <!-- ============================================================ -->
-  <!-- AI DIAGNOSTICS & CHATGPT DRAWER                              -->
+  <!-- CIRIS INTELLIGENCE ASSISTANT (DRAWER)                        -->
   <!-- ============================================================ -->
   <div id="ai-drawer">
     <div class="drawer-header">
       <div class="drawer-brand">
-        <div class="drawer-icon" style="background: linear-gradient(135deg, #10a37f 0%, #06b6d4 100%);">
+        <div class="drawer-icon" style="background: linear-gradient(135deg, #06b6d4 0%, #10b981 100%);">
           <i data-lucide="bot"></i>
         </div>
         <div>
           <div class="drawer-name">
-            ChatGPT Health Intelligence
-            <span class="drawer-active-dot" style="background:#10a37f;"></span>
+            CIRIS Biometric Assistant
+            <span class="drawer-active-dot" style="background:#10b981;"></span>
           </div>
-          <div class="drawer-sub">GPT-4o Medical & Hardware AI Assistant</div>
+          <div class="drawer-sub">Offline-Ready Sensor & Early-Warning AI</div>
         </div>
       </div>
       <button onclick="toggleAiDrawer()" class="drawer-close">
@@ -1265,13 +1372,20 @@
       </button>
     </div>
 
+    <!-- Live Watch Biometric Snapshot -->
     <div class="drawer-context">
-      <span>Live watch context:</span>
+      <span>Live hardware context:</span>
       <div class="drawer-context-vals">
         <span>HR: <b id="ai-mini-bpm" style="color:var(--cyan-l)">72 BPM</b></span>
         <span>Temp: <b id="ai-mini-temp" style="color:var(--amber)">34.2°C</b></span>
         <span>Solar: <b id="ai-mini-solar" style="color:var(--green-l)">28.4mA</b></span>
       </div>
+    </div>
+
+    <!-- Clinical Disclaimer -->
+    <div style="padding:8px 16px; background:rgba(239,68,68,0.08); border-bottom:1px solid rgba(239,68,68,0.2); font-size:11px; color:#fca5a5; display:flex; align-items:center; gap:6px;">
+      <i data-lucide="alert-triangle" style="width:13px;height:13px;flex-shrink:0;"></i>
+      <span>Informational only — not medical advice. In an emergency, immediately call 112.</span>
     </div>
 
     <div id="chat-messages"></div>
@@ -1284,20 +1398,18 @@
     </div>
 
     <form id="chat-form" class="chat-form" onsubmit="handleChatSubmit(event)">
-      <input id="chat-input" type="text" placeholder="Ask ChatGPT about health vitals, sensors, SOS..." autocomplete="off">
-      <button type="submit" class="chat-send" style="background: #10a37f;">
+      <input id="chat-input" type="text" placeholder="Ask about health vitals, sensors, escalation..." autocomplete="off">
+      <button type="submit" class="chat-send" style="background: var(--cyan); color:#000;">
         <i data-lucide="send"></i>
       </button>
     </form>
   </div>
 
-  <!-- ============================================================ -->
-  <!-- FLOATING BOTTOM-RIGHT CHATBOT WIDGET                         -->
-  <!-- ============================================================ -->
-  <div class="chat-fab-widget" onclick="toggleAiDrawer()" title="Ask ChatGPT / Health AI Assistant">
+  <!-- FLOATING BOTTOM-RIGHT CHATBOT WIDGET -->
+  <div class="chat-fab-widget" onclick="toggleAiDrawer()" title="Ask CIRIS Health Assistant">
     <div class="chat-fab-tooltip">
       <i data-lucide="sparkles" style="width:14px;height:14px;"></i>
-      <span>Chat with AI</span>
+      <span>CIRIS Assistant</span>
     </div>
     <div class="chat-fab-btn">
       <i data-lucide="message-square"></i>
@@ -1305,12 +1417,226 @@
     </div>
   </div>
 
-  <script src="scrollytelling.js?v=3.4"></script>
-  <script src="telemetry.js?v=3.4"></script>
+  <!-- ============================================================ -->
+  <!-- SIMULATION LAB SLIDE-OUT DRAWER                             -->
+  <!-- ============================================================ -->
+  <div id="simulation-lab-drawer" class="sim-lab-drawer">
+    <div class="sim-lab-header">
+      <div class="sim-lab-title">
+        <i data-lucide="sliders" style="width:16px;height:16px;color:var(--cyan);"></i>
+        <h3>Simulation Lab & Stress Testing</h3>
+      </div>
+      <button class="sim-lab-close" onclick="window.simulationLab && window.simulationLab.toggleDrawer()"><i data-lucide="x"></i></button>
+    </div>
+
+    <div class="sim-lab-content">
+      <div class="sim-lab-desc">
+        Inject physical sensor anomalies to evaluate on-device ML early warning, continuous PPG degradation, and contact escalation.
+      </div>
+
+      <div class="sim-scenario-grid">
+        <button class="sim-card-btn" onclick="window.simulationLab && window.simulationLab.triggerScenario('freefall')">
+          <div class="sim-btn-icon" style="background:rgba(239,68,68,0.15);color:var(--red);"><i data-lucide="activity"></i></div>
+          <div class="sim-btn-text">
+            <strong>Freefall Impact</strong>
+            <span>4.2g spike + tachycardia (148 BPM)</span>
+          </div>
+        </button>
+
+        <button class="sim-card-btn" onclick="window.simulationLab && window.simulationLab.triggerScenario('storm')">
+          <div class="sim-btn-icon" style="background:rgba(6,182,212,0.15);color:var(--cyan);"><i data-lucide="cloud-lightning"></i></div>
+          <div class="sim-btn-text">
+            <strong>Barometric Storm Drop</strong>
+            <span>−28 hPa delta + 92% flood risk</span>
+          </div>
+        </button>
+
+        <button class="sim-card-btn" onclick="window.simulationLab && window.simulationLab.triggerScenario('darkness')">
+          <div class="sim-btn-icon" style="background:rgba(245,158,11,0.15);color:var(--amber);"><i data-lucide="moon"></i></div>
+          <div class="sim-btn-text">
+            <strong>Pitch Black Darkness</strong>
+            <span>0 Lux · Solar harvesting cutoff</span>
+          </div>
+        </button>
+
+        <button class="sim-card-btn" onclick="window.simulationLab && window.simulationLab.triggerScenario('heatwave')">
+          <div class="sim-btn-icon" style="background:rgba(249,115,22,0.15);color:#f97316;"><i data-lucide="thermometer"></i></div>
+          <div class="sim-btn-text">
+            <strong>Extreme Heatwave</strong>
+            <span>38.8°C ambient + high heat index</span>
+          </div>
+        </button>
+
+        <button class="sim-card-btn" onclick="window.simulationLab && window.simulationLab.triggerScenario('nominal')">
+          <div class="sim-btn-icon" style="background:rgba(34,197,94,0.15);color:var(--green);"><i data-lucide="check-circle"></i></div>
+          <div class="sim-btn-text">
+            <strong>Restore Nominal State</strong>
+            <span>72 BPM, 1013 hPa, 28mA solar</span>
+          </div>
+        </button>
+      </div>
+
+      <!-- Real-Time Event Audit Log -->
+      <div class="sim-event-timeline-box">
+        <div class="sim-log-head">
+          <span>Simulation & Alert Event Log</span>
+          <button onclick="window.simulationLab && window.simulationLab.clearLog()" class="clear-log-btn">Clear</button>
+        </div>
+        <div class="sim-event-timeline" id="simulation-event-timeline">
+          <!-- Dynamically injected events -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- COMMAND PALETTE (CMD+K) MODAL                                -->
+  <!-- ============================================================ -->
+  <div id="command-palette-modal" class="cmd-palette-modal">
+    <div class="cmd-palette-box">
+      <div class="cmd-palette-input-wrap">
+        <i data-lucide="search" style="width:16px;height:16px;color:var(--text-muted);"></i>
+        <input type="text" id="cmd-palette-input" placeholder="Type a command or jump to section..." autocomplete="off">
+        <kbd class="cmd-badge">ESC</kbd>
+      </div>
+      <div class="cmd-results-list" id="cmd-palette-results">
+        <!-- Injected via command_palette.js -->
+      </div>
+      <div class="cmd-palette-footer">
+        <span>Navigation: <kbd>↑</kbd> <kbd>↓</kbd> · Select: <kbd>↵</kbd></span>
+        <span>CIRIS Platform v3.5</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SETTINGS DRAWER                                              -->
+  <!-- ============================================================ -->
+  <div id="settings-drawer" class="sim-lab-drawer">
+    <div class="sim-lab-header">
+      <div class="sim-lab-title">
+        <i data-lucide="settings" style="width:16px;height:16px;color:var(--cyan);"></i>
+        <h3>Console & Band Preferences</h3>
+      </div>
+      <button class="sim-lab-close" onclick="window.personalizationStore && window.personalizationStore.toggleSettings()"><i data-lucide="x"></i></button>
+    </div>
+
+    <div class="sim-lab-content" style="padding:20px;">
+      <div class="settings-group" style="margin-bottom:20px;">
+        <label style="font-size:12px; font-weight:600; text-transform:uppercase; color:var(--text-muted); display:block; margin-bottom:8px;">Theme Mode</label>
+        <div style="display:flex; gap:10px;">
+          <button class="preset-pill active" onclick="window.personalizationStore && window.personalizationStore.setTheme('dark')">Deep Dark</button>
+          <button class="preset-pill" onclick="window.personalizationStore && window.personalizationStore.setTheme('light')">Clinical White</button>
+        </div>
+      </div>
+
+      <div class="settings-group" style="margin-bottom:20px;">
+        <label style="font-size:12px; font-weight:600; text-transform:uppercase; color:var(--text-muted); display:block; margin-bottom:8px;">Temperature Units</label>
+        <div style="display:flex; gap:10px;">
+          <button class="preset-pill active">Celsius (°C)</button>
+          <button class="preset-pill">Fahrenheit (°F)</button>
+        </div>
+      </div>
+
+      <div class="settings-group" style="margin-bottom:20px;">
+        <label style="font-size:12px; font-weight:600; text-transform:uppercase; color:var(--text-muted); display:block; margin-bottom:8px;">Data Density</label>
+        <div style="display:flex; gap:10px;">
+          <button class="preset-pill active">Comfortable</button>
+          <button class="preset-pill">Compact (High Density)</button>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <label style="font-size:12px; font-weight:600; text-transform:uppercase; color:var(--text-muted); display:block; margin-bottom:8px;">Emergency Escalation Timeout</label>
+        <span style="font-size:12px; color:var(--text-secondary);">30 seconds before auto-dialing Priority 1 Contact</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- EMERGENCY ESCALATION ACTIVE COUNTDOWN BANNER -->
+  <div id="escalation-banner" class="escalation-banner">
+    <div class="escalation-inner">
+      <div class="esc-left">
+        <div class="esc-pulse-icon"><i data-lucide="alert-octagon"></i></div>
+        <div>
+          <strong id="escalation-banner-title">CRITICAL FALL DETECTED — ESCALATION INITIATED</strong>
+          <p id="escalation-banner-sub">Auto-dialing Priority 1 Contact in <span id="escalation-countdown-num">30</span>s if not cancelled.</p>
+        </div>
+      </div>
+      <div class="esc-actions">
+        <button class="esc-cancel-btn" onclick="window.simulationLab && window.simulationLab.cancelEscalation()">Cancel Emergency Alert</button>
+        <button class="esc-call-now-btn" onclick="window.simulationLab && window.simulationLab.immediateDispatch()">Dispatch Now (112)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOBILE BOTTOM TAB NAVIGATION -->
+  <div class="mobile-tab-bar" aria-label="Mobile Navigation">
+    <a href="#scrolly" class="mobile-tab-item active">
+      <i data-lucide="compass"></i>
+      <span>Overview</span>
+    </a>
+    <a href="#dashboard" class="mobile-tab-item">
+      <i data-lucide="activity"></i>
+      <span>Vitals</span>
+    </a>
+    <button class="mobile-tab-item sos-tab-item" onclick="togglePanicState()">
+      <div class="mobile-sos-circle">SOS</div>
+      <span>Emergency</span>
+    </button>
+    <button class="mobile-tab-item" onclick="window.simulationLab && window.simulationLab.toggleDrawer()">
+      <i data-lucide="sliders"></i>
+      <span>Sim Lab</span>
+    </button>
+    <button class="mobile-tab-item" onclick="toggleAiDrawer()">
+      <i data-lucide="bot"></i>
+      <span>AI</span>
+    </button>
+  </div>
+
+  <!-- CIRIS Modular Scripts -->
+  <script src="modules/personalization.js"></script>
+  <script src="modules/simulation_lab.js"></script>
+  <script src="modules/command_palette.js"></script>
+  <script src="scrollytelling.js?v=3.5"></script>
+  <script src="telemetry.js?v=3.5"></script>
   <script src="ml_platform_ui.js"></script>
-  <script src="chatbot.js?v=3.4"></script>
+  <script src="chatbot.js?v=3.5"></script>
   <script>
     lucide.createIcons();
+
+    // Register Service Worker for PWA Offline Shell
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(reg => console.log('[PWA] Service Worker registered:', reg.scope))
+          .catch(err => console.warn('[PWA] Registration failed:', err));
+      });
+    }
+
+    // BOM Category Filter and Search Engine
+    function setBomFilter(cat, btn) {
+      document.querySelectorAll('.bom-chip').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      const cards = document.querySelectorAll('.bom-card');
+      cards.forEach(c => {
+        const itemCat = c.getAttribute('data-category');
+        if (cat === 'all' || itemCat === cat) {
+          c.style.display = '';
+        } else {
+          c.style.display = 'none';
+        }
+      });
+    }
+
+    function filterBomCards() {
+      const q = (document.getElementById('bom-search-input')?.value || '').toLowerCase();
+      const cards = document.querySelectorAll('.bom-card');
+      cards.forEach(c => {
+        const text = c.textContent.toLowerCase();
+        c.style.display = text.includes(q) ? '' : 'none';
+      });
+    }
 
     // Modal helpers
     function openComplaintModal() {
@@ -1392,6 +1718,7 @@
       
       const modal = document.getElementById('auth-gate-modal');
       modal.classList.add('hidden');
+      if (window.personalizationStore) window.personalizationStore.loadWearerProfile();
     }
 
     function bypassAuthGuest() {
@@ -1404,12 +1731,14 @@
       ]));
       const modal = document.getElementById('auth-gate-modal');
       modal.classList.add('hidden');
+      if (window.personalizationStore) window.personalizationStore.loadWearerProfile();
     }
 
     // Check existing session
     if (sessionStorage.getItem('ciris_auth_token')) {
       const modal = document.getElementById('auth-gate-modal');
       if (modal) modal.classList.add('hidden');
+      if (window.personalizationStore) window.personalizationStore.loadWearerProfile();
     }
 
   </script>
